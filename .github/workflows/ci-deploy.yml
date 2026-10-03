@@ -81,7 +81,7 @@ jobs:
       url: https://${{ vars.APP_DOMAIN || 'clarifyme.maidocs.in' }}
     env:
       VPS_HOST: ${{ vars.VPS_HOST || '69.62.85.167' }}
-      VPS_USER: ${{ vars.VPS_USER || 'root' }}
+      VPS_USER: ${{ vars.VPS_USER || 'jyotipravat' }}
       VPS_PORT: ${{ vars.VPS_PORT || '22' }}
       APP_DOMAIN: ${{ vars.APP_DOMAIN || 'clarifyme.maidocs.in' }}
       APP_DIR: ${{ vars.APP_DIR || 'clarifyme' }}
@@ -118,10 +118,13 @@ jobs:
           CFG
           # First deploy: make sure the server has rsync and the app folder.
           if ! ssh -F ~/.ssh/config vps true; then
-            echo "::error title=SSH login refused::The server did not accept VPS_SSH_KEY for user '$VPS_USER'. Add the deploy key's .pub to /home/$VPS_USER/.ssh/authorized_keys (or /root/.ssh/authorized_keys for root), or set the VPS_USER variable to the user that has it. See DEPLOY.md."
+            echo "::error title=SSH login refused::The server did not accept VPS_SSH_KEY for user '$VPS_USER'. From your laptop run: ssh-copy-id -i ~/.ssh/clarifyme_deploy.pub $VPS_USER@$VPS_HOST  (see DEPLOY.md)"
             exit 1
           fi
-          ssh -F ~/.ssh/config vps "mkdir -p ~/$APP_DIR && (command -v rsync >/dev/null || (apt-get update -qq && apt-get install -y -qq rsync) || sudo -n sh -c 'apt-get update -qq && apt-get install -y -qq rsync')"
+          if ! ssh -F ~/.ssh/config vps "mkdir -p ~/$APP_DIR && command -v rsync >/dev/null && command -v docker >/dev/null"; then
+            echo "::error title=One-time server setup needed::Docker or rsync is missing on the server. From your laptop run: ssh -t $VPS_USER@$VPS_HOST 'curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/HEAD/deploy/server-setup.sh | sudo bash -s -- $VPS_USER $APP_DOMAIN'  then re-run this workflow."
+            exit 1
+          fi
 
       - name: Prepare settings from GitHub secrets
         if: env.HAS_KEY == 'true'

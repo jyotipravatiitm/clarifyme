@@ -1,27 +1,29 @@
 #!/usr/bin/env bash
-# Prepares the VPS. Runs ON THE SERVER on every deploy (GitHub Actions calls it); safe to repeat.
-#   - installs Docker if missing
+# Runs ON THE SERVER at every deploy, as the normal deploy user (no sudo needed).
+#   - checks the one-time setup (deploy/server-setup.sh) was done
 #   - merges settings sent by GitHub Actions (.env.github) into .env, keeping the DB password
-#   - opens the firewall, and if the server already runs nginx, adds a site + HTTPS certificate
-# Needs root, or a user with passwordless sudo.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+log() { printf '\033[1;36m[provision]\033[0m %s\n' "$*"; }
 
-log()  { printf '\033[1;36m[provision]\033[0m %s\n' "$*"; }
-SUDO=""; [ "$(id -u)" -ne 0 ] && SUDO="sudo -n"
-
-# ---- Docker
-if ! command -v docker >/dev/null; then
-  log "installing Docker..."
-  curl -fsSL https://get.docker.com | $SUDO sh
+# Root (or passwordless sudo) can do the one-time setup automatically.
+if ! docker info >/dev/null 2>&1; then
+  if [ "$(id -u)" -eq 0 ]; then bash deploy/server-setup.sh root
+  elif sudo -n true 2>/dev/null; then sudo -n bash deploy/server-setup.sh "$(id -un)"
+  fi
 fi
-$SUDO systemctl enable --now docker >/dev/null 2>&1 || true
-if [ "$(id -u)" -ne 0 ] && ! id -nG | grep -qw docker; then
-  $SUDO usermod -aG docker "$(id -un)"
-  log "added $(id -un) to the docker group (takes effect on the next login)"
+if ! docker info >/dev/null 2>&1; then
+  cat >&2 <<MSG
+[provision] This user can't run Docker yet. Do the one-time setup from your laptop (asks for your sudo password):
+
+  ssh -t $(id -un)@<server> 'curl -fsSL https://raw.githubusercontent.com/jyotipravatiitm/clarifyme/HEAD/deploy/server-setup.sh | sudo bash -s -- $(id -un) <domain>'
+
+Then run the GitHub workflow again.
+MSG
+  exit 1
 fi
 
-# ---- .env: values from GitHub override, everything else (e.g. POSTGRES_PASSWORD) is kept
+# .env: values from GitHub override; everything else (e.g. POSTGRES_PASSWORD) is kept.
 touch .env && chmod 600 .env
 if [ -f .env.github ]; then
   keys="$(grep -oE '^[A-Z0-9_]+=' .env.github | tr -d '=' | paste -sd'|' -)"
@@ -37,32 +39,12 @@ if ! grep -qE '^POSTGRES_PASSWORD=.+' .env; then
   log "generated a database password (kept in .env, never leaves the server)"
 fi
 grep -qE '^DOMAIN=.+' .env || { echo "DOMAIN is not set" >&2; exit 1; }
-DOMAIN="$(grep -E '^DOMAIN=' .env | tail -1 | cut -d= -f2-)"
 
-# ---- Firewall
-if command -v ufw >/dev/null && $SUDO ufw status 2>/dev/null | grep -q "Status: active"; then
-  for p in 22/tcp 80/tcp 443/tcp 443/udp; do $SUDO ufw allow "$p" >/dev/null; done
-fi
-
-# ---- Reverse proxy: our Caddy, or the server's existing nginx
 if [ ! -s .deploy-mode ]; then
   if pgrep -x nginx >/dev/null 2>&1; then echo nginx > .deploy-mode; else echo caddy > .deploy-mode; fi
 fi
-if [ "$(cat .deploy-mode)" = nginx ]; then
-  site=/etc/nginx/sites-available/clarifyme
-  if [ ! -f "$site" ]; then
-    log "nginx detected: adding a site for $DOMAIN -> 127.0.0.1:3000"
-    sed "s/clarifyme.maidocs.in/$DOMAIN/g" deploy/nginx-clarifyme.conf | $SUDO tee "$site" >/dev/null
-    if [ -d /etc/nginx/sites-enabled ]; then $SUDO ln -sf "$site" /etc/nginx/sites-enabled/clarifyme
-    else $SUDO cp "$site" /etc/nginx/conf.d/clarifyme.conf; fi
-    $SUDO nginx -t && $SUDO systemctl reload nginx
-  fi
-  if ! $SUDO test -d "/etc/letsencrypt/live/$DOMAIN"; then
-    command -v certbot >/dev/null || { $SUDO apt-get update -qq && $SUDO apt-get install -y -qq certbot python3-certbot-nginx >/dev/null; }
-    email="$(grep -E '^CERT_EMAIL=' .env | cut -d= -f2- || true)"
-    if [ -n "$email" ]; then reg=(-m "$email"); else reg=(--register-unsafely-without-email); fi
-    log "requesting an HTTPS certificate for $DOMAIN..."
-    $SUDO certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --redirect "${reg[@]}" || log "certbot failed; check DNS for $DOMAIN, the next deploy retries"
-  fi
+if [ "$(cat .deploy-mode)" = nginx ] && [ ! -e /etc/nginx/sites-enabled/clarifyme ] && [ ! -e /etc/nginx/conf.d/clarifyme.conf ]; then
+  echo "[provision] nginx runs here but has no ClarifyMe site yet. Run the one-time setup (deploy/server-setup.sh)." >&2
+  exit 1
 fi
 log "server ready ($(cat .deploy-mode) mode)"
