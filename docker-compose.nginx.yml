@@ -1,10 +1,10 @@
 # Use this when the VPS already runs nginx (or another proxy) on ports 80/443:
 #   docker compose -f docker-compose.yml -f docker-compose.nginx.yml up -d --build
-# Caddy is switched off and the app listens on 127.0.0.1:3000 only,
+# Caddy is switched off and the app listens on 127.0.0.1:$APP_PORT only (default 3417, set in .env),
 # so nginx (deploy/nginx-clarifyme.conf) can proxy to it.
 services:
   caddy:
     profiles: ["caddy"]
   app:
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:${APP_PORT:-3417}:3000"
