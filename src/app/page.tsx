@@ -1,10 +1,15 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { TRACKS } from "@/lib/content";
-import { aiStatus } from "@/lib/ai/status";
-import { HomeClient } from "@/components/game/HomeClient";
+import { Landing } from "@/components/landing/Landing";
+import { peekActor } from "@/server/actor";
 
 export const dynamic = "force-dynamic";
 
-export default function Home() {
-  const ai = aiStatus();
-  return <HomeClient tracks={TRACKS} aiLabel={ai.label} aiOn={ai.jev || ai.llm} />;
+/** New visitors see the landing page; anyone who has started (or signed in) goes straight to the path. */
+export default async function Home() {
+  const jar = await cookies();
+  const { userId } = await peekActor();
+  if (userId || jar.get("cm_started")) redirect("/learn");
+  return <Landing tracks={TRACKS.map(({ id, title, tagline }) => ({ id, title, tagline }))} />;
 }

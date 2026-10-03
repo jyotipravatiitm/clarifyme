@@ -57,7 +57,7 @@ export function CookieBanner({ gaId, mode }: { gaId: string; mode: ConsentMode }
           aria-label="Cookie settings"
           initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 40, opacity: 0 }}
+          exit={{ y: 40, opacity: 0, pointerEvents: "none" }}
           className="card fixed inset-x-3 bottom-3 z-[60] flex flex-col gap-3 p-4 sm:inset-x-auto sm:left-4 sm:max-w-sm"
         >
           <p className="flex items-center gap-2 text-lg font-black">

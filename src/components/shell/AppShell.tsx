@@ -2,18 +2,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, History, Info, Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX } from "lucide-react";
 import { setMuted, useProgress } from "@/lib/progress";
 import { useFeatures } from "@/components/Features";
 import { AccountButton, ProgressSync } from "@/components/auth/Account";
 import { Mascot } from "@/components/game/Mascot";
 import { TopBar } from "@/components/game/TopBar";
+import { AboutIcon, LearnIcon, ProfileIcon, QuestsIcon, ReviewIcon } from "@/components/game/NavIcons";
 import { StatsRail } from "./StatsRail";
 
 const NAV = [
-  { href: "/", label: "Learn", icon: BookOpen },
-  { href: "/history", label: "Review", icon: History },
-  { href: "/about", label: "Why it works", icon: Info },
+  { href: "/learn", label: "Learn", icon: LearnIcon, mobile: true },
+  { href: "/quests", label: "Quests", icon: QuestsIcon, mobile: true },
+  { href: "/history", label: "Review", icon: ReviewIcon, mobile: true },
+  { href: "/profile", label: "Profile", icon: ProfileIcon, mobile: true },
+  { href: "/about", label: "Why it works", icon: AboutIcon, mobile: false },
 ];
 
 /**
@@ -24,7 +27,7 @@ export function AppShell({ children, rail = true }: { children: React.ReactNode;
   const pathname = usePathname();
   const { auth } = useFeatures();
   const p = useProgress();
-  const active = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+  const active = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <div className="min-h-dvh">
@@ -34,7 +37,7 @@ export function AppShell({ children, rail = true }: { children: React.ReactNode;
       </div>
       <div className="mx-auto flex max-w-[1280px]">
         <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-2 border-r-2 border-line px-4 py-6 lg:flex">
-          <Link href="/" className="mb-6 flex items-center gap-2 px-2" aria-label="ClarifyMe home">
+          <Link href="/learn" className="mb-6 flex items-center gap-2 px-2" aria-label="ClarifyMe home">
             <Mascot size={44} />
             <span className="text-3xl font-black tracking-tight text-brand">clarifyme</span>
           </Link>
@@ -45,11 +48,15 @@ export function AppShell({ children, rail = true }: { children: React.ReactNode;
                 href={href}
                 aria-current={active(href) ? "page" : undefined}
                 className={`flex items-center gap-4 rounded-2xl border-2 px-4 py-3 text-sm font-black uppercase tracking-wider transition-colors ${
-                  active(href) ? "border-brand/50 bg-brand-tint text-brand-shade" : "border-transparent text-ink-soft hover:bg-bg-soft"
+                  active(href) ? "" : "border-transparent text-ink-soft hover:bg-bg-soft"
                 }`}
-                style={active(href) ? { color: "var(--brand-shade)" } : undefined}
+                style={
+                  active(href)
+                    ? { color: "var(--spec)", borderColor: "color-mix(in srgb, var(--spec) 45%, transparent)", background: "color-mix(in srgb, var(--spec) 10%, var(--surface))" }
+                    : undefined
+                }
               >
-                <Icon size={26} strokeWidth={2.5} /> {label}
+                <Icon size={30} /> {label}
               </Link>
             ))}
           </nav>
@@ -71,22 +78,13 @@ export function AppShell({ children, rail = true }: { children: React.ReactNode;
       </div>
 
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-30 flex border-t-2 border-line bg-bg/95 backdrop-blur lg:hidden">
-        {NAV.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            aria-current={active(href) ? "page" : undefined}
-            className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-xs font-extrabold ${active(href) ? "text-brand" : "text-ink-soft"}`}
-          >
-            <Icon size={24} strokeWidth={2.5} />
-            {label === "Why it works" ? "About" : label}
+        {NAV.filter((n) => n.mobile).map(({ href, label, icon: Icon }) => (
+          <Link key={href} href={href} aria-current={active(href) ? "page" : undefined} aria-label={label} className="flex flex-1 items-center justify-center py-2">
+            <span className={`rounded-2xl border-2 p-1.5 ${active(href) ? "border-[var(--spec)]/50 bg-[color-mix(in_srgb,var(--spec)_12%,var(--surface))]" : "border-transparent"}`}>
+              <Icon size={30} />
+            </span>
           </Link>
         ))}
-        {auth && (
-          <div className="flex flex-1 items-center justify-center py-2 text-ink-soft">
-            <AccountButton compact />
-          </div>
-        )}
       </nav>
     </div>
   );

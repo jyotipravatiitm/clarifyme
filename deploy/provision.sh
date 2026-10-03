@@ -16,7 +16,7 @@ if ! docker info >/dev/null 2>&1; then
   cat >&2 <<MSG
 [provision] This user can't run Docker yet. Do the one-time setup from your laptop (asks for your sudo password):
 
-  ssh -t $(id -un)@<server> 'curl -fsSL https://raw.githubusercontent.com/jyotipravatiitm/clarifyme/HEAD/deploy/server-setup.sh | sudo bash -s -- $(id -un) <domain>'
+  ssh -t $(id -un)@<server> 'curl -fsSL -H "Accept: application/vnd.github.raw" https://api.github.com/repos/jyotipravatiitm/clarifyme/contents/deploy/server-setup.sh | sudo bash -s -- $(id -un) <domain>'
 
 Then run the GitHub workflow again.
 MSG

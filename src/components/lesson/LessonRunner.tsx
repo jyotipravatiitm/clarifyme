@@ -10,10 +10,12 @@ import { completeLesson, useProgress, type LessonReward } from "@/lib/progress";
 import { syncProgress } from "@/lib/progress-sync";
 import { announceTrial, type TrialInfo } from "@/lib/trial-client";
 import { track } from "@/lib/analytics";
+import { markStarted } from "@/lib/started";
 import { play } from "@/lib/sfx";
 import { Mascot } from "@/components/game/Mascot";
 import { TrialGate } from "@/components/auth/TrialGate";
 import { BreakStep } from "./BreakStep";
+import { QuickStep } from "./QuickStep";
 import { CompleteScreen } from "./CompleteScreen";
 import { OutOfHearts } from "./OutOfHearts";
 import { WriteStep } from "./WriteStep";
@@ -58,6 +60,7 @@ export function LessonRunner({ lesson, steps }: { lesson: LessonInfo; steps: Pub
       setSessionId(body.sessionId ?? null);
       if (body.trial) announceTrial(body.trial as TrialInfo);
       startedAt.current = Date.now();
+      markStarted();
       setPhase("play");
       track("lesson_start", { lesson: lesson.id, track: lesson.trackId });
     } catch {
@@ -72,7 +75,7 @@ export function LessonRunner({ lesson, steps }: { lesson: LessonInfo; steps: Pub
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") router.push("/");
+      if (e.key === "Escape") router.push("/learn");
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -127,7 +130,7 @@ export function LessonRunner({ lesson, steps }: { lesson: LessonInfo; steps: Pub
     const xp = steps.reduce((sum, c, i) => sum + xpFor(c.xp, all[i] ?? 0), 0) + (hearts === HEARTS ? 5 : 0);
     const avg = Math.round(all.reduce((a, b) => a + b, 0) / all.length);
     setElapsed(Math.round((Date.now() - startedAt.current) / 1000));
-    setReward(completeLesson(lesson.id, avg, xp));
+    setReward(completeLesson(lesson.id, avg, xp, all.filter((s) => s >= 3).length));
     setPhase("done");
     play("complete", muted);
     track("lesson_complete", { lesson: lesson.id, track: lesson.trackId, stars: avg, xp, hearts_left: hearts });
@@ -147,7 +150,7 @@ export function LessonRunner({ lesson, steps }: { lesson: LessonInfo; steps: Pub
   return (
     <div className="mx-auto flex min-h-dvh max-w-2xl flex-col px-4 lg:max-w-5xl">
       <header className="sticky top-0 z-20 flex items-center gap-4 bg-bg py-4">
-        <Link href="/" className="flex items-center gap-1 rounded-xl p-1 text-ink-soft hover:bg-bg-soft" aria-label="Quit lesson">
+        <Link href="/learn" className="flex items-center gap-1 rounded-xl p-1 text-ink-soft hover:bg-bg-soft" aria-label="Quit lesson">
           <X size={28} strokeWidth={2.75} />
           <kbd className="hidden rounded-md border-2 border-b-4 border-line px-1.5 text-[11px] font-black lg:inline">Esc</kbd>
         </Link>
@@ -187,14 +190,18 @@ export function LessonRunner({ lesson, steps }: { lesson: LessonInfo; steps: Pub
           {phase === "gate" && <TrialGate key="gate" used={trialUsed} />}
           {phase === "play" && step && (
             <motion.div key={`${attempt}-${step.id}`} initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.25 }}>
-              <p className="mb-1 text-sm font-black uppercase tracking-widest" style={{ color: `var(--${lesson.trackId}-shade)` }}>
-                {step.skill}
-              </p>
-              <h1 className="mb-5 text-2xl font-black sm:text-3xl">{step.title}</h1>
+              <div className={step.kind === "choice" || step.kind === "tap" ? "mx-auto max-w-2xl" : ""}>
+                <p className="mb-1 text-sm font-black uppercase tracking-widest" style={{ color: `var(--${lesson.trackId}-shade)` }}>
+                  {step.kind === "choice" || step.kind === "tap" ? "Quick check" : "Challenge"} · {step.skill}
+                </p>
+                <h1 className="mb-5 text-2xl font-black sm:text-3xl">{step.title}</h1>
+              </div>
               {step.kind === "write" ? (
                 <WriteStep challenge={step} trackId={lesson.trackId} muted={muted} sessionId={sessionId} onMistake={mistake} onDone={done} />
-              ) : (
+              ) : step.kind === "break" ? (
                 <BreakStep challenge={step} trackId={lesson.trackId} muted={muted} sessionId={sessionId} onMistake={mistake} onDone={done} />
+              ) : (
+                <QuickStep challenge={step} trackId={lesson.trackId} muted={muted} sessionId={sessionId} onMistake={mistake} onDone={done} />
               )}
             </motion.div>
           )}

@@ -1,7 +1,8 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { DEFAULT_PROGRESS, applyLessonResult, withFreshDay, type LessonReward, type Progress } from "./progress-core";
+import { DEFAULT_PROGRESS, applyChest, applyLessonResult, normalizeProgress, withFreshDay, type LessonReward, type Progress, type TrackId } from "./progress-core";
+import { applyQuestClaim, type QuestId } from "./quests";
 
 export * from "./progress-core";
 
@@ -13,7 +14,7 @@ function read(): Progress {
   try {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return DEFAULT_PROGRESS;
-    return { ...DEFAULT_PROGRESS, ...JSON.parse(raw) };
+    return normalizeProgress(JSON.parse(raw));
   } catch {
     return DEFAULT_PROGRESS;
   }
@@ -55,10 +56,33 @@ export function useProgress(): Progress {
   );
 }
 
-export function completeLesson(lessonId: string, stars: number, xp: number): LessonReward {
-  const { next, reward } = applyLessonResult(getSnapshot(), lessonId, stars, xp);
+export function completeLesson(lessonId: string, stars: number, xp: number, perfect = 0): LessonReward {
+  const { next, reward } = applyLessonResult(getSnapshot(), lessonId, stars, xp, undefined, perfect);
   write(next);
   return reward;
+}
+
+/** Opens a path chest. Returns the reward, or null if it was already open. */
+export function openChest(chestId: string): LessonReward | null {
+  const r = applyChest(getSnapshot(), chestId);
+  if (!r) return null;
+  write(r.next);
+  return r.reward;
+}
+
+export function claimQuest(id: QuestId): LessonReward | null {
+  const r = applyQuestClaim(getSnapshot(), id);
+  if (!r) return null;
+  write(r.next);
+  return r.reward;
+}
+
+export function finishOnboarding(track: TrackId, dailyGoal: number) {
+  write({ ...getSnapshot(), onboarded: true, track, dailyGoal });
+}
+
+export function setTrack(track: TrackId) {
+  write({ ...getSnapshot(), track });
 }
 
 export function setMuted(muted: boolean) {

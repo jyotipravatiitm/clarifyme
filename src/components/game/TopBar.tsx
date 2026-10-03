@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Flame, Gem, Volume2, VolumeX } from "lucide-react";
+import { Flame, Volume2, VolumeX } from "lucide-react";
 import { motion } from "motion/react";
 import { setMuted, useProgress } from "@/lib/progress";
 import { Mascot } from "./Mascot";
+import { GemIcon } from "./NavIcons";
 
 export function TopBar() {
   const p = useProgress();
@@ -12,7 +13,7 @@ export function TopBar() {
   return (
     <header className="sticky top-0 z-30 border-b-2 border-line bg-bg/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-3xl items-center gap-3 px-4">
-        <Link href="/" className="flex items-center gap-1.5" aria-label="ClarifyMe home">
+        <Link href="/learn" className="flex items-center gap-1.5" aria-label="ClarifyMe home">
           <Mascot size={40} />
           <span className="text-2xl font-black tracking-tight text-brand">clarifyme</span>
         </Link>
@@ -22,8 +23,8 @@ export function TopBar() {
             <span className={streakToday ? "text-flame" : "text-ink-soft"}>{p.streak}</span>
           </Stat>
           <Stat label={`${p.xp} XP`} title="Total XP">
-            <Gem size={22} strokeWidth={2.5} className="fill-gold/60 text-gold" />
-            <motion.span key={p.xp} initial={{ scale: 1.4 }} animate={{ scale: 1 }} className="text-gold">
+            <GemIcon size={22} />
+            <motion.span key={p.xp} initial={{ scale: 1.4 }} animate={{ scale: 1 }} style={{ color: "var(--spec)" }}>
               {p.xp}
             </motion.span>
           </Stat>

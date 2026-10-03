@@ -14,7 +14,7 @@ export function OutOfHearts({ onRetry }: { onRetry: () => void }) {
       </h1>
       <p className="max-w-sm text-lg font-bold text-ink-soft">Clear writing is hard. That&apos;s the point! Start the lesson again, and use a hint if you get stuck.</p>
       <div className="flex gap-3">
-        <Link href="/" className="btn3d ghost">
+        <Link href="/learn" className="btn3d ghost">
           Back to path
         </Link>
         <button type="button" className="btn3d" onClick={onRetry} autoFocus>

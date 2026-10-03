@@ -46,7 +46,7 @@ export const attempts = pgTable(
       .notNull()
       .references(() => lessonSessions.id, { onDelete: "cascade" }),
     challengeId: text("challenge_id").notNull(),
-    kind: text("kind", { enum: ["write", "break"] }).notNull(),
+    kind: text("kind", { enum: ["write", "break", "choice", "tap"] }).notNull(),
     input: jsonb("input").notNull(),
     result: jsonb("result").notNull(),
     pass: boolean("pass").notNull(),

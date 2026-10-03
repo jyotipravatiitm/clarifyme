@@ -52,3 +52,23 @@ export interface BreakResult {
   mode: JudgeMode;
   aiError?: string;
 }
+
+/** Result of a one-tap question (choice or tap). Always graded instantly on the server. */
+export interface QuickResult {
+  kind: "choice" | "tap";
+  pass: boolean;
+  stars: 0 | 3;
+  headline: string;
+  feedback: string;
+  /** choice */
+  correctIndex?: number;
+  picked?: number;
+  whys?: string[];
+  options?: string[];
+  /** tap */
+  tokens?: string[];
+  answer?: number[];
+  tapped?: number[];
+  missed?: number[];
+  extra?: number[];
+}

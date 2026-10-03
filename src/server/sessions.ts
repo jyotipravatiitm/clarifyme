@@ -95,7 +95,7 @@ export async function getOwnedSession(db: DB, actor: Actor, id: string): Promise
 export async function recordAttempt(
   db: DB,
   sessionId: string,
-  a: { challengeId: string; kind: "write" | "break"; input: unknown; result: unknown; pass: boolean; stars: number },
+  a: { challengeId: string; kind: "write" | "break" | "choice" | "tap"; input: unknown; result: unknown; pass: boolean; stars: number },
 ): Promise<void> {
   await db.insert(attempts).values({ sessionId, ...a });
 }

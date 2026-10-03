@@ -1,0 +1,273 @@
+[
+  {
+    "id": "q-ste-1", "kind": "choice", "title": "Pick the plain step", "skill": "Simplified English",
+    "prompt": "Which instruction would a tired mechanic get right the first time?",
+    "options": [
+      { "text": "It is recommended that the valve be closed prior to removal of the pump.", "why": "Passive, long, and \"prior to\" / \"recommended\" hide what to do." },
+      { "text": "Close the valve. Then remove the pump.", "correct": true, "why": "One action per sentence, active voice, simple words." },
+      { "text": "Closing of the valve should ideally happen before pump removal.", "why": "\"Should ideally\" makes it optional, and no one is told to act." }
+    ]
+  },
+  {
+    "id": "q-ste-2", "kind": "tap", "title": "Spot the fancy words", "skill": "Simplified English",
+    "prompt": "Tap the 2 words a Simplified English writer would replace.",
+    "sentence": "Utilize the torque wrench prior to installing the cover.",
+    "targets": ["utilize", "prior"],
+    "explain": "\"Utilize\" → \"use\", \"prior to\" → \"before\". Short, common words have one meaning."
+  },
+  {
+    "id": "q-up-1", "kind": "choice", "title": "Simple words only", "skill": "Simple words",
+    "prompt": "Which explains a \"cloud backup\" to your grandmother?",
+    "options": [
+      { "text": "Your files are replicated to redundant off-site storage infrastructure.", "why": "Every second word needs a dictionary." },
+      { "text": "A copy of your photos is kept on another computer far away, so you won't lose them.", "correct": true, "why": "Everyday words, and it says why it matters." },
+      { "text": "It's like the cloud, but for backups.", "why": "Explains the word with itself. Nothing learned." }
+    ]
+  },
+  {
+    "id": "q-up-2", "kind": "tap", "title": "Too technical", "skill": "Simple words",
+    "prompt": "Tap the 3 words that aren't everyday words.",
+    "sentence": "The application authenticates your credentials before you can see your account.",
+    "targets": ["application", "authenticates", "credentials"],
+    "explain": "Try: \"The app checks your name and password before you can see your account.\""
+  },
+  {
+    "id": "q-bluf-1", "kind": "choice", "title": "Bottom line first", "skill": "BLUF",
+    "prompt": "Your manager will read only the first line. Which one should it be?",
+    "options": [
+      { "text": "Hope you had a good weekend! Quick update on the vendor thing from last week.", "why": "Friendly, but the reader still doesn't know what you need." },
+      { "text": "As you know, the vendor sent new pricing, and there are a few things to consider.", "why": "Background first. The point is still hidden." },
+      { "text": "Please approve the 18% vendor price rise by Friday, or the rollout slips to Q4.", "correct": true, "why": "The decision, the deadline and the cost, all in line one." }
+    ]
+  },
+  {
+    "id": "q-bluf-2", "kind": "choice", "title": "Lead with the ask", "skill": "BLUF",
+    "prompt": "Which subject line gets the right action fastest?",
+    "options": [
+      { "text": "Server stuff", "why": "Says nothing about what's needed or when." },
+      { "text": "Action by 5pm: approve downtime for Saturday 2am patch", "correct": true, "why": "Action, deadline and topic. Readers can triage it in a second." },
+      { "text": "Some thoughts about the upcoming maintenance window", "why": "Sounds optional, and the ask is buried." }
+    ]
+  },
+  {
+    "id": "q-vague-1", "kind": "tap", "title": "Find the fog", "skill": "No vague words",
+    "prompt": "Tap the 2 vague words a customer could argue about.",
+    "sentence": "We reply to most urgent tickets soon.",
+    "targets": ["most", "soon"],
+    "explain": "\"Most\" — which ones? \"Soon\" — within what time? Replace each with a number."
+  },
+  {
+    "id": "q-vague-2", "kind": "choice", "title": "Can you check it?", "skill": "No vague words",
+    "prompt": "Which promise could a customer and a manager both check?",
+    "options": [
+      { "text": "We aim to respond quickly to important issues.", "why": "\"Quickly\" and \"important\" mean different things to different people." },
+      { "text": "We reply to every P1 ticket within 1 hour, 24/7.", "correct": true, "why": "A defined class, a number and the hours. Anyone can verify it." },
+      { "text": "We reply as soon as reasonably possible.", "why": "Always true, so it promises nothing." }
+    ]
+  },
+  {
+    "id": "q-andor-1", "kind": "choice", "title": "And, or, or both?", "skill": "No and/or",
+    "prompt": "\"Members get free shipping and/or a 5% discount.\" Can a member get both?",
+    "options": [
+      { "text": "Yes", "why": "Maybe — but another reader will say no." },
+      { "text": "No", "why": "Maybe — but another reader will say yes." },
+      { "text": "The sentence doesn't say", "correct": true, "why": "\"And/or\" lets the reader pick. Write \"free shipping, a 5% discount, or both\"." }
+    ]
+  },
+  {
+    "id": "q-pro-1", "kind": "choice", "title": "Who is \"she\"?", "skill": "Clear pronouns",
+    "prompt": "\"The manager told the engineer that she was promoted.\" Who was promoted?",
+    "options": [
+      { "text": "The manager", "why": "Possible — but so is the engineer." },
+      { "text": "The engineer", "why": "Possible — but so is the manager." },
+      { "text": "You can't tell", "correct": true, "why": "\"She\" can point to either person. Repeat the noun: \"…that the engineer was promoted\"." }
+    ]
+  },
+  {
+    "id": "q-pro-2", "kind": "tap", "title": "Pointing at what?", "skill": "Clear pronouns",
+    "prompt": "Tap every word that could point to two different things.",
+    "sentence": "When the app sends the file to the server, it compresses it.",
+    "targets": ["it"],
+    "explain": "Does the app compress the file, or does the server compress something? Name the actor and the object."
+  },
+  {
+    "id": "q-ears-1", "kind": "choice", "title": "Spot the EARS shape", "skill": "EARS requirements",
+    "prompt": "Which sentence follows an EARS template?",
+    "options": [
+      { "text": "The door locks itself after a while.", "why": "No trigger, no \"shall\", and \"a while\" is vague." },
+      { "text": "When the door has been closed for 30 seconds, the controller shall lock the door.", "correct": true, "why": "When <trigger>, the <system> shall <response>. Testable." },
+      { "text": "Locking should happen automatically if needed.", "why": "Who locks? When is it \"needed\"? \"Should\" is a wish." }
+    ]
+  },
+  {
+    "id": "q-ears-2", "kind": "tap", "title": "Wish or rule?", "skill": "EARS requirements",
+    "prompt": "Tap the word that turns this requirement into a wish.",
+    "sentence": "When the battery falls below 20%, the drone should return to the launch point.",
+    "targets": ["should"],
+    "explain": "\"Should\" sounds optional. Requirements use \"shall\" (or \"must\")."
+  },
+  {
+    "id": "q-claim-1", "kind": "choice", "title": "What's the claim?", "skill": "Claim + reason",
+    "prompt": "What is the writer's main claim?",
+    "source": "Our onboarding has seven screens. Half of new users quit before the last one. Teams that cut onboarding to two screens doubled activation. We should cut ours to two.",
+    "options": [
+      { "text": "Half of new users quit onboarding.", "why": "That's evidence, not the claim." },
+      { "text": "We should cut onboarding to two screens.", "correct": true, "why": "That's what the writer wants us to accept and act on." },
+      { "text": "Other teams doubled activation.", "why": "Another piece of evidence for the claim." }
+    ]
+  },
+  {
+    "id": "q-claim-2", "kind": "choice", "title": "Reason or claim?", "skill": "Claim + reason",
+    "prompt": "\"We should move the standup to 10am because half the team starts at 9:30.\" Which part is the reason?",
+    "options": [
+      { "text": "We should move the standup to 10am", "why": "That's the claim — what we're asked to do." },
+      { "text": "half the team starts at 9:30", "correct": true, "why": "It's offered as support for the claim." },
+      { "text": "Neither — it's just an opinion", "why": "It has a clear claim and a reason; whether the reason is good is another question." }
+    ]
+  },
+  {
+    "id": "q-asm-1", "kind": "choice", "title": "The missing link", "skill": "Hidden assumptions",
+    "prompt": "\"Sales rose after we changed the logo, so the new logo works.\" What does this quietly assume?",
+    "options": [
+      { "text": "That nothing else that month (season, prices, ads) caused the rise.", "correct": true, "why": "After ≠ because. The argument needs the logo to be the cause." },
+      { "text": "That the old logo was blue.", "why": "Irrelevant to whether the conclusion follows." },
+      { "text": "That sales are measured in dollars.", "why": "The unit doesn't matter here." }
+    ]
+  },
+  {
+    "id": "q-asm-2", "kind": "choice", "title": "Correlation trap", "skill": "Hidden assumptions",
+    "prompt": "\"People who use our premium plan churn less, so upselling everyone to premium will cut churn.\" What's the weak spot?",
+    "options": [
+      { "text": "Premium is more expensive.", "why": "True, but not why the reasoning fails." },
+      { "text": "Loyal customers may choose premium — premium may not create loyalty.", "correct": true, "why": "The cause might run the other way (or a third factor drives both)." },
+      { "text": "Churn is hard to spell.", "why": "Nice try." }
+    ]
+  },
+  {
+    "id": "q-steel-1", "kind": "choice", "title": "Find the steelman", "skill": "Steelmanning",
+    "prompt": "You support remote work. Which is the strongest fair version of the other side?",
+    "options": [
+      { "text": "People just want to slack off at home.", "why": "That's a strawman: weak and unfair." },
+      { "text": "New hires learn much faster by overhearing and asking in person, and that mentoring is hard to rebuild remotely.", "correct": true, "why": "Specific, plausible, and something a real opponent would say." },
+      { "text": "Offices are nice.", "why": "True, maybe, but not an argument." }
+    ]
+  },
+  {
+    "id": "q-steel-2", "kind": "choice", "title": "Spot the strawman", "skill": "Steelmanning",
+    "prompt": "Someone says: \"We should add tests before refactoring.\" Which reply attacks a strawman?",
+    "options": [
+      { "text": "Tests take time; for this one-line change the risk seems low.", "why": "Engages with the actual proposal." },
+      { "text": "So you want us to stop shipping until we reach 100% coverage?", "correct": true, "why": "It swaps their claim for an extreme one that's easy to knock down." },
+      { "text": "Which parts are riskiest? Let's test those first.", "why": "A constructive, fair response." }
+    ]
+  },
+  {
+    "id": "q-asm-3", "kind": "choice", "title": "Who's missing?", "skill": "Hidden assumptions",
+    "prompt": "\"All the users we interviewed love the new design.\" Who might be missing from this picture?",
+    "options": [
+      { "text": "Users who left because of the new design", "correct": true, "why": "If you only ask people who stayed, you only hear from people who like it (survivorship bias)." },
+      { "text": "The designers", "why": "They're not the users being described." },
+      { "text": "Nobody — interviews are always representative", "why": "Interview groups are rarely a fair sample." }
+    ]
+  },
+  {
+    "id": "q-asm-4", "kind": "tap", "title": "Loaded words", "skill": "Hidden assumptions",
+    "prompt": "Tap the 2 words that slip in an unproven assumption.",
+    "sentence": "Obviously everyone prefers dark mode, so make it the default.",
+    "targets": ["obviously", "everyone"],
+    "explain": "\"Obviously\" skips the evidence; \"everyone\" claims a 100% that nobody measured."
+  },
+  {
+    "id": "q-spec-1", "kind": "tap", "title": "Can't build that", "skill": "Corner cases",
+    "prompt": "Tap the word a developer can't implement as written.",
+    "sentence": "Password reset links expire quickly.",
+    "targets": ["quickly"],
+    "explain": "15 minutes? 24 hours? Two developers will pick two numbers."
+  },
+  {
+    "id": "q-spec-2", "kind": "choice", "title": "The unasked question", "skill": "Corner cases",
+    "prompt": "\"A user can request a reset link by email.\" Which question does this spec NOT answer?",
+    "options": [
+      { "text": "Does a newer link cancel the older ones?", "correct": true, "why": "Request twice, and two teams will build two different behaviours." },
+      { "text": "How does the user ask for a link?", "why": "The spec says: by email." },
+      { "text": "Who can request a link?", "why": "The spec says: a user." }
+    ]
+  },
+  {
+    "id": "q-ref-1", "kind": "choice", "title": "Which 30 days?", "skill": "Corner cases",
+    "prompt": "Which refund rule leaves no room for two agents to disagree?",
+    "options": [
+      { "text": "Refunds within 30 days.", "why": "30 days from what? Purchase, shipping or delivery?" },
+      { "text": "Refunds within 30 calendar days of the delivery date shown in tracking.", "correct": true, "why": "Start point, day type and source of truth are all fixed." },
+      { "text": "Refunds within about a month.", "why": "\"About\" invites arguments." }
+    ]
+  },
+  {
+    "id": "q-ref-2", "kind": "tap", "title": "Agents will argue", "skill": "Corner cases",
+    "prompt": "Tap the 2 words two support agents could read differently.",
+    "sentence": "Items must be returned in good condition within a reasonable time.",
+    "targets": ["good", "reasonable"],
+    "explain": "\"Good condition\" — box opened? tags missing? \"Reasonable time\" — whose idea of reasonable?"
+  },
+  {
+    "id": "q-meet-1", "kind": "choice", "title": "Whose hours?", "skill": "Corner cases",
+    "prompt": "Ana is in London and Ben in San Francisco. \"Book the first free hour during working hours.\" What's undefined?",
+    "options": [
+      { "text": "Whose working hours count", "correct": true, "why": "London 9–5 and San Francisco 9–5 barely overlap. The spec doesn't say which applies." },
+      { "text": "How long the meeting is", "why": "The spec says one hour." },
+      { "text": "Who should attend", "why": "Ana and Ben." }
+    ]
+  },
+  {
+    "id": "q-meet-2", "kind": "choice", "title": "When nothing fits", "skill": "Corner cases",
+    "prompt": "Everyone's calendar is full next week. What does \"book the first free slot next week\" do?",
+    "options": [
+      { "text": "Books the week after", "why": "The spec never says that." },
+      { "text": "Shows an error", "why": "The spec never says that either." },
+      { "text": "Undefined — the spec forgot the empty case", "correct": true, "why": "Always ask: what happens when the answer is \"nothing\"?" }
+    ]
+  },
+  {
+    "id": "q-inv-1", "kind": "choice", "title": "Always true", "skill": "Invariants",
+    "prompt": "Which of these is an invariant — true in every state, not just at the end?",
+    "options": [
+      { "text": "After a transfer, an email is sent.", "why": "That's an event that happens once, not a rule for every state." },
+      { "text": "The sum of the two balances never changes during a transfer.", "correct": true, "why": "True before, during and after — even if the server crashes midway." },
+      { "text": "Transfers should be fast.", "why": "A wish, and vague." }
+    ]
+  },
+  {
+    "id": "q-inv-2", "kind": "choice", "title": "Never, ever", "skill": "Invariants",
+    "prompt": "Which state must an elevator NEVER be in?",
+    "options": [
+      { "text": "Doors open, car stopped at a floor", "why": "That's how people get in and out." },
+      { "text": "Doors open, car moving", "correct": true, "why": "This is the safety invariant: never move unless the doors are closed." },
+      { "text": "Doors closed, car moving", "why": "That's normal travel." }
+    ]
+  },
+  {
+    "id": "q-inv-3", "kind": "tap", "title": "Weak safety rule", "skill": "Invariants",
+    "prompt": "Tap the 2 words that make this safety rule useless.",
+    "sentence": "The car should usually not move while the doors are open.",
+    "targets": ["should", "usually"],
+    "explain": "Safety rules hold always: \"The car must not move while any door is open.\""
+  },
+  {
+    "id": "q-lock-1", "kind": "choice", "title": "Make it testable", "skill": "Invariants",
+    "prompt": "Which lockout rule could a tester check?",
+    "options": [
+      { "text": "Lock the account after too many wrong passwords.", "why": "How many is too many? For how long?" },
+      { "text": "After 5 consecutive failed logins, lock the account for 15 minutes.", "correct": true, "why": "A count, what \"consecutive\" covers, and a duration." },
+      { "text": "Lock suspicious accounts as needed.", "why": "Who decides what's suspicious or needed?" }
+    ]
+  },
+  {
+    "id": "q-lock-2", "kind": "choice", "title": "Run the rule", "skill": "Invariants",
+    "prompt": "Rule: \"After 5 consecutive failed logins, lock the account. A successful login resets the count.\" A user fails 3 times, logs in, then fails 3 more. Locked?",
+    "options": [
+      { "text": "Yes — 6 failures in total", "why": "The rule counts consecutive failures, and the success reset the count." },
+      { "text": "No — the count is 3", "correct": true, "why": "Running the rule step by step, like a model checker, shows the count is 3." },
+      { "text": "The rule doesn't say", "why": "This rule is precise enough to answer." }
+    ]
+  }
+]

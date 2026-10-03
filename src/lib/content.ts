@@ -2,6 +2,7 @@ import { z } from "zod";
 import writing from "@/content/challenges/writing.json";
 import thinking from "@/content/challenges/thinking.json";
 import spec from "@/content/challenges/spec.json";
+import quick from "@/content/challenges/quick.json";
 import tracksJson from "@/content/tracks.json";
 
 const RuleIdSchema = z.enum([
@@ -70,9 +71,36 @@ export const BreakChallengeSchema = Base.extend({
   hints: z.array(z.string()).min(1),
 });
 
-export const ChallengeSchema = z.discriminatedUnion("kind", [WriteChallengeSchema, BreakChallengeSchema]);
+/** One-tap question: pick the option that is right. Exactly one option is correct. */
+export const ChoiceChallengeSchema = Base.extend({
+  kind: z.literal("choice"),
+  xp: z.number().int().positive().default(5),
+  prompt: z.string(),
+  /** Optional text the question is about, shown in a quote card. */
+  source: z.string().optional(),
+  options: z
+    .array(z.object({ text: z.string(), correct: z.boolean().default(false), why: z.string() }))
+    .min(2)
+    .max(4)
+    .refine((o) => o.filter((x) => x.correct).length === 1, "exactly one option must be correct"),
+});
+
+/** Tap the fuzzy words in a sentence. Every occurrence of each target word must be tapped. */
+export const TapChallengeSchema = Base.extend({
+  kind: z.literal("tap"),
+  xp: z.number().int().positive().default(5),
+  prompt: z.string(),
+  sentence: z.string(),
+  /** Words (case-insensitive, punctuation ignored) that should be tapped. */
+  targets: z.array(z.string()).min(1),
+  explain: z.string(),
+});
+
+export const ChallengeSchema = z.discriminatedUnion("kind", [WriteChallengeSchema, BreakChallengeSchema, ChoiceChallengeSchema, TapChallengeSchema]);
 export type WriteChallenge = z.infer<typeof WriteChallengeSchema>;
 export type BreakChallenge = z.infer<typeof BreakChallengeSchema>;
+export type ChoiceChallenge = z.infer<typeof ChoiceChallengeSchema>;
+export type TapChallenge = z.infer<typeof TapChallengeSchema>;
 export type Challenge = z.infer<typeof ChallengeSchema>;
 export type HiddenCase = z.infer<typeof HiddenCaseSchema>;
 
@@ -100,7 +128,7 @@ export const TrackSchema = z.object({
 export type Track = z.infer<typeof TrackSchema>;
 export type Lesson = z.infer<typeof LessonSchema>;
 
-export const CHALLENGES: Challenge[] = z.array(ChallengeSchema).parse([...writing, ...thinking, ...spec]);
+export const CHALLENGES: Challenge[] = z.array(ChallengeSchema).parse([...quick, ...writing, ...thinking, ...spec]);
 export const TRACKS: Track[] = z.array(TrackSchema).parse(tracksJson);
 
 const byId = new Map(CHALLENGES.map((c) => [c.id, c]));
@@ -129,17 +157,49 @@ export function getLesson(id: string): LessonRef | undefined {
   return allLessons().find((l) => l.lesson.id === id);
 }
 
-/** What the browser may see. The hidden intent and hidden cases stay on the server. */
+/** Splits a tap sentence into tappable words (punctuation stays attached for display). */
+export function tapTokens(sentence: string): string[] {
+  return sentence.split(/\s+/).filter(Boolean);
+}
+
+export function normalizeWord(w: string): string {
+  return w.toLowerCase().replace(/^[^a-z0-9%]+|[^a-z0-9%]+$/g, "");
+}
+
+/** Indices of the tokens that must be tapped. */
+export function tapAnswer(c: TapChallenge): number[] {
+  const targets = new Set(c.targets.map(normalizeWord));
+  return tapTokens(c.sentence)
+    .map((t, i) => (targets.has(normalizeWord(t)) ? i : -1))
+    .filter((i) => i >= 0);
+}
+
+/** What the browser may see. Hidden intents, hidden cases and correct answers stay on the server. */
 export type PublicChallenge =
   | (Omit<WriteChallenge, "intent" | "mustMention"> & { kind: "write" })
-  | (Omit<BreakChallenge, "hiddenCases"> & { kind: "break"; caseCount: number });
+  | (Omit<BreakChallenge, "hiddenCases"> & { kind: "break"; caseCount: number })
+  | (Omit<ChoiceChallenge, "options"> & { kind: "choice"; options: string[] })
+  | (Omit<TapChallenge, "targets" | "explain"> & { kind: "tap"; tokens: string[]; targetCount: number });
 
 export function toPublic(c: Challenge): PublicChallenge {
-  if (c.kind === "write") {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { intent, mustMention, ...rest } = c;
-    return rest;
+  switch (c.kind) {
+    case "write": {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { intent, mustMention, ...rest } = c;
+      return rest;
+    }
+    case "break": {
+      const { hiddenCases, ...rest } = c;
+      return { ...rest, caseCount: hiddenCases.length };
+    }
+    case "choice": {
+      const { options, ...rest } = c;
+      return { ...rest, options: options.map((o) => o.text) };
+    }
+    case "tap": {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { targets, explain, ...rest } = c;
+      return { ...rest, tokens: tapTokens(c.sentence), targetCount: tapAnswer(c).length };
+    }
   }
-  const { hiddenCases, ...rest } = c;
-  return { ...rest, caseCount: hiddenCases.length };
 }

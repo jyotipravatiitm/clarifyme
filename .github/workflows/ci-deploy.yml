@@ -78,12 +78,12 @@ jobs:
       cancel-in-progress: false
     environment:
       name: production
-      url: https://${{ vars.APP_DOMAIN || 'clarifyme.maidocs.in' }}
+      url: https://${{ vars.APP_DOMAIN || 'clarity.maidocs.in' }}
     env:
       VPS_HOST: ${{ vars.VPS_HOST || '69.62.85.167' }}
       VPS_USER: ${{ vars.VPS_USER || 'jyotipravat' }}
       VPS_PORT: ${{ vars.VPS_PORT || '22' }}
-      APP_DOMAIN: ${{ vars.APP_DOMAIN || 'clarifyme.maidocs.in' }}
+      APP_DOMAIN: ${{ vars.APP_DOMAIN || 'clarity.maidocs.in' }}
       APP_DIR: ${{ vars.APP_DIR || 'clarifyme' }}
       HAS_KEY: ${{ secrets.VPS_SSH_KEY != '' }}
     steps:
@@ -122,7 +122,7 @@ jobs:
             exit 1
           fi
           if ! ssh -F ~/.ssh/config vps "mkdir -p ~/$APP_DIR && command -v rsync >/dev/null && command -v docker >/dev/null"; then
-            echo "::error title=One-time server setup needed::Docker or rsync is missing on the server. From your laptop run: ssh -t $VPS_USER@$VPS_HOST 'curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/HEAD/deploy/server-setup.sh | sudo bash -s -- $VPS_USER $APP_DOMAIN'  then re-run this workflow."
+            echo "::error title=One-time server setup needed::Docker or rsync is missing on the server. From your laptop run: ssh -t $VPS_USER@$VPS_HOST 'curl -fsSL -H \"Accept: application/vnd.github.raw\" https://api.github.com/repos/${{ github.repository }}/contents/deploy/server-setup.sh | sudo bash -s -- $VPS_USER $APP_DOMAIN'  then re-run this workflow."
             exit 1
           fi
 
@@ -131,7 +131,7 @@ jobs:
         env:
           CLERK_PK: ${{ secrets.CLERK_PUBLISHABLE_KEY || vars.CLERK_PUBLISHABLE_KEY }}
           CLERK_SK: ${{ secrets.CLERK_SECRET_KEY }}
-          GA_ID: ${{ secrets.GA_MEASUREMENT_ID || vars.GA_MEASUREMENT_ID }}
+          GA_ID: ${{ secrets.GA_MEASUREMENT_ID || vars.GA_MEASUREMENT_ID || 'G-GQ27VPM6QY' }}
           GA_CONSENT: ${{ vars.GA_CONSENT }}
           FREE_LESSONS: ${{ vars.FREE_LESSONS }}
           CERT_EMAIL: ${{ vars.CERT_EMAIL }}

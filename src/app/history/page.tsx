@@ -54,7 +54,7 @@ export default async function HistoryPage() {
       <HistoryList items={items} />
     ) : (
       <Empty title="Nothing to review yet" text="Finish a lesson and every answer you wrote will show up here, with the judge's feedback.">
-        <Link href="/" className="btn3d">
+        <Link href="/learn" className="btn3d">
           Start a lesson
         </Link>
       </Empty>

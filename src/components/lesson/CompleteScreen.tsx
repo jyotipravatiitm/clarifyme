@@ -60,7 +60,7 @@ export function CompleteScreen({ reward, stars, seconds, flawless }: { reward: L
       <BottomPortal>
         <div className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-line bg-bg">
           <div className="mx-auto flex max-w-2xl justify-end px-4 py-4">
-            <Link href="/" className="btn3d min-w-40">
+            <Link href="/learn" className="btn3d min-w-40">
               Continue
             </Link>
           </div>

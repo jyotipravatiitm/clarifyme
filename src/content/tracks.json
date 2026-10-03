@@ -10,9 +10,38 @@
         "title": "Say it plainly",
         "description": "Short sentences, active voice, simple words.",
         "lessons": [
-          { "id": "plain-steps", "title": "Plain steps", "icon": "wrench", "steps": ["w-ste-1", "w-ste-2"] },
-          { "id": "simple-words", "title": "Simple words", "icon": "feather", "steps": ["w-upgoer-1", "w-upgoer-2"] },
-          { "id": "bluf", "title": "Bottom line first", "icon": "target", "steps": ["w-bluf-1"] }
+          {
+            "id": "plain-steps",
+            "title": "Plain steps",
+            "icon": "wrench",
+            "steps": [
+              "q-ste-1",
+              "q-ste-2",
+              "w-ste-1",
+              "w-ste-2"
+            ]
+          },
+          {
+            "id": "simple-words",
+            "title": "Simple words",
+            "icon": "feather",
+            "steps": [
+              "q-up-1",
+              "q-up-2",
+              "w-upgoer-1",
+              "w-upgoer-2"
+            ]
+          },
+          {
+            "id": "bluf",
+            "title": "Bottom line first",
+            "icon": "target",
+            "steps": [
+              "q-bluf-1",
+              "q-bluf-2",
+              "w-bluf-1"
+            ]
+          }
         ]
       },
       {
@@ -20,9 +49,39 @@
         "title": "Say it once",
         "description": "Remove every second meaning.",
         "lessons": [
-          { "id": "no-vague", "title": "Make it testable", "icon": "ruler", "steps": ["w-vague-1", "w-andor-1"] },
-          { "id": "pronouns", "title": "Who is \"it\"?", "icon": "pointer", "steps": ["w-ambig-1"] },
-          { "id": "ears", "title": "EARS requirements", "icon": "ear", "steps": ["w-ears-1", "w-ears-2"] }
+          {
+            "id": "no-vague",
+            "title": "Make it testable",
+            "icon": "ruler",
+            "steps": [
+              "q-vague-1",
+              "q-vague-2",
+              "q-andor-1",
+              "w-vague-1",
+              "w-andor-1"
+            ]
+          },
+          {
+            "id": "pronouns",
+            "title": "Who is \"it\"?",
+            "icon": "pointer",
+            "steps": [
+              "q-pro-1",
+              "q-pro-2",
+              "w-ambig-1"
+            ]
+          },
+          {
+            "id": "ears",
+            "title": "EARS requirements",
+            "icon": "ear",
+            "steps": [
+              "q-ears-1",
+              "q-ears-2",
+              "w-ears-1",
+              "w-ears-2"
+            ]
+          }
         ]
       }
     ]
@@ -38,10 +97,46 @@
         "title": "Find the claim",
         "description": "Claims, reasons and the assumptions in between.",
         "lessons": [
-          { "id": "claim-reason", "title": "Claim + reason", "icon": "target", "steps": ["t-claim-1"] },
-          { "id": "assumptions", "title": "Hidden assumptions", "icon": "search", "steps": ["t-assume-1"] },
-          { "id": "steelman", "title": "Steelman", "icon": "shield", "steps": ["t-steel-1"] },
-          { "id": "assumptions-2", "title": "Too good to be true", "icon": "star", "steps": ["t-assume-2"] }
+          {
+            "id": "claim-reason",
+            "title": "Claim + reason",
+            "icon": "target",
+            "steps": [
+              "q-claim-1",
+              "q-claim-2",
+              "t-claim-1"
+            ]
+          },
+          {
+            "id": "assumptions",
+            "title": "Hidden assumptions",
+            "icon": "search",
+            "steps": [
+              "q-asm-1",
+              "q-asm-2",
+              "t-assume-1"
+            ]
+          },
+          {
+            "id": "steelman",
+            "title": "Steelman",
+            "icon": "shield",
+            "steps": [
+              "q-steel-1",
+              "q-steel-2",
+              "t-steel-1"
+            ]
+          },
+          {
+            "id": "assumptions-2",
+            "title": "Too good to be true",
+            "icon": "star",
+            "steps": [
+              "q-asm-3",
+              "q-asm-4",
+              "t-assume-2"
+            ]
+          }
         ]
       }
     ]
@@ -57,9 +152,36 @@
         "title": "Break the spec",
         "description": "Find the cases loose wording forgot.",
         "lessons": [
-          { "id": "break-reset", "title": "Password reset", "icon": "key", "steps": ["s-break-reset"] },
-          { "id": "break-refund", "title": "Refund policy", "icon": "receipt", "steps": ["s-break-refund"] },
-          { "id": "break-meeting", "title": "Meeting scheduler", "icon": "calendar", "steps": ["s-break-meeting"] }
+          {
+            "id": "break-reset",
+            "title": "Password reset",
+            "icon": "key",
+            "steps": [
+              "q-spec-1",
+              "q-spec-2",
+              "s-break-reset"
+            ]
+          },
+          {
+            "id": "break-refund",
+            "title": "Refund policy",
+            "icon": "receipt",
+            "steps": [
+              "q-ref-1",
+              "q-ref-2",
+              "s-break-refund"
+            ]
+          },
+          {
+            "id": "break-meeting",
+            "title": "Meeting scheduler",
+            "icon": "calendar",
+            "steps": [
+              "q-meet-1",
+              "q-meet-2",
+              "s-break-meeting"
+            ]
+          }
         ]
       },
       {
@@ -67,9 +189,35 @@
         "title": "Write the invariant",
         "description": "State the rule that must hold in every state.",
         "lessons": [
-          { "id": "inv-transfer", "title": "Bank transfer", "icon": "bank", "steps": ["s-inv-transfer"] },
-          { "id": "inv-door", "title": "Elevator door", "icon": "door", "steps": ["s-inv-door"] },
-          { "id": "inv-lockout", "title": "Login lockout", "icon": "lock", "steps": ["s-inv-lockout"] }
+          {
+            "id": "inv-transfer",
+            "title": "Bank transfer",
+            "icon": "bank",
+            "steps": [
+              "q-inv-1",
+              "s-inv-transfer"
+            ]
+          },
+          {
+            "id": "inv-door",
+            "title": "Elevator door",
+            "icon": "door",
+            "steps": [
+              "q-inv-2",
+              "q-inv-3",
+              "s-inv-door"
+            ]
+          },
+          {
+            "id": "inv-lockout",
+            "title": "Login lockout",
+            "icon": "lock",
+            "steps": [
+              "q-lock-1",
+              "q-lock-2",
+              "s-inv-lockout"
+            ]
+          }
         ]
       }
     ]

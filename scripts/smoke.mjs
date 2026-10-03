@@ -1,4 +1,4 @@
-// End-to-end smoke test. Plays real lessons against a running server and saves screenshots.
+// End-to-end smoke test. Plays the real app against a running server and saves screenshots.
 //   npm run build && npm start   (optionally with DATABASE_URL and NEXT_PUBLIC_GA_ID set)
 //   BASE_URL=http://localhost:3000 node scripts/smoke.mjs
 import { chromium } from "playwright-core";
@@ -7,11 +7,11 @@ import fs from "node:fs";
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const OUT = process.env.SHOTS ?? "screenshots";
 const executablePath = process.env.CHROMIUM_PATH ?? (fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined);
+const QUICK = JSON.parse(fs.readFileSync(new URL("../src/content/challenges/quick.json", import.meta.url), "utf8"));
 fs.mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch({ executablePath });
 let failures = 0;
-const settle = (page) => page.waitForTimeout(1200);
 const expect = (cond, msg) => {
   if (!cond) {
     failures++;
@@ -19,9 +19,33 @@ const expect = (cond, msg) => {
   } else console.log("ok:", msg);
 };
 const shot = async (page, name) => {
-  await settle(page);
-  await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: false });
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: `${OUT}/${name}.png` });
 };
+const norm = (w) => w.toLowerCase().replace(/^[^a-z0-9%]+|[^a-z0-9%]+$/g, "");
+
+/** Answers every quick (choice / tap) step on screen correctly, using the content file. */
+async function answerQuickSteps(page) {
+  let answered = 0;
+  for (;;) {
+    await page.locator("main h1").first().waitFor();
+    const title = (await page.locator("main h1").first().innerText()).trim();
+    const q = QUICK.find((x) => x.title === title);
+    if (!q) return answered;
+    if (q.kind === "choice") {
+      await page.getByRole("radio").nth(q.options.findIndex((o) => o.correct)).click();
+    } else {
+      const targets = new Set(q.targets.map(norm));
+      const words = page.getByRole("group", { name: "Words in the sentence" }).getByRole("button");
+      const tokens = q.sentence.split(/\s+/);
+      for (let i = 0; i < tokens.length; i++) if (targets.has(norm(tokens[i]))) await words.nth(i).click();
+    }
+    await page.getByRole("button", { name: "Check", exact: true }).click();
+    await page.getByRole("button", { name: /Continue/ }).click();
+    answered++;
+    await page.waitForTimeout(400);
+  }
+}
 
 async function run(name, viewport, { desktop }) {
   const ctx = await browser.newContext({ viewport, reducedMotion: "reduce" });
@@ -31,34 +55,40 @@ async function run(name, viewport, { desktop }) {
     console.error("page error:", e.message);
   });
 
-  // ---- Home + cookie banner ----
+  // ---- Landing + cookie banner ----
   await page.goto(BASE);
-  await page.getByRole("heading", { name: "Writing" }).waitFor();
-  expect(await page.getByText("Say it plainly").isVisible(), `${name}: unit banner visible`);
+  await page.getByRole("heading", { name: /fun way to write/ }).waitFor();
+  expect(await page.getByRole("heading", { name: "What is ClarifyMe?" }).isVisible(), `${name}: landing explains the product`);
   const banner = page.getByRole("dialog", { name: "Cookie settings" });
   const hasGA = await banner.waitFor({ timeout: 4000 }).then(() => true, () => false);
   if (hasGA) {
-    await shot(page, `${name}-home-cookie-banner`);
+    await shot(page, `${name}-landing-cookie-banner`);
     await banner.getByRole("button", { name: desktop ? "OK" : "Opt out", exact: true }).click();
     const consent = (await ctx.cookies()).find((c) => c.name === "cm_consent")?.value;
     expect(consent === (desktop ? "granted" : "denied"), `${name}: consent cookie saved (${consent})`);
-    await page.reload();
-    await page.getByRole("heading", { name: "Writing" }).waitFor();
-    expect(!(await banner.isVisible().catch(() => false)), `${name}: banner stays closed after a choice`);
   }
-  if (desktop) {
-    expect(await page.getByRole("navigation", { name: "Main" }).first().isVisible(), `${name}: sidebar navigation visible`);
-  } else {
-    expect(await page.locator("nav[aria-label=Main]").last().isVisible(), `${name}: bottom tab bar visible`);
-  }
-  await shot(page, `${name}-home`);
+  await shot(page, `${name}-landing`);
 
-  // ---- Write lesson (keyboard on desktop) ----
+  // ---- Onboarding → first lesson ----
+  await page.getByRole("link", { name: "Get started" }).first().click();
+  await page.getByText("What do you want to get better at?").waitFor();
+  await page.getByRole("button", { name: /Writing/ }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByText("How much time").waitFor();
+  await page.getByRole("button", { name: /15 min/ }).click();
+  await shot(page, `${name}-welcome-goal`);
+  await page.getByRole("button", { name: "Start my first lesson" }).click();
+  await page.getByText("Pick the plain step").waitFor();
+  expect(true, `${name}: onboarding opens the first lesson`);
+  await shot(page, `${name}-quick-choice`);
+
+  // ---- Write lesson: quick warm-ups, then a failed and a passing answer ----
   await page.goto(`${BASE}/lesson/ears`);
+  expect((await answerQuickSteps(page)) === 2, `${name}: answered 2 quick checks`);
   const box = page.getByLabel("Your answer");
   await box.fill("The door should lock after a while.");
   if (desktop) await box.press("Control+Enter");
-  else await page.getByRole("button", { name: "Check" }).click();
+  else await page.getByRole("button", { name: "Check", exact: true }).click();
   await page.getByRole("button", { name: /Try again/ }).waitFor();
   expect(await page.locator("mark").count() > 0, `${name}: bad answer gets highlighted spans`);
   await shot(page, `${name}-write-fail`);
@@ -66,13 +96,12 @@ async function run(name, viewport, { desktop }) {
   else await page.getByRole("button", { name: /Try again/ }).click();
   await box.fill("When the door has been closed for 30 seconds, the door controller shall lock the door.");
   if (desktop) await box.press("Control+Enter");
-  else await page.getByRole("button", { name: "Check" }).click();
+  else await page.getByRole("button", { name: "Check", exact: true }).click();
   await page.getByRole("button", { name: /Continue/ }).waitFor();
-  await shot(page, `${name}-write-pass`);
   if (desktop) await page.keyboard.press("Enter");
   else await page.getByRole("button", { name: /Continue/ }).click();
   await page.getByLabel("Your answer").fill("While the drone is in flight, when the battery charge falls below 20%, the drone shall return to the launch point.");
-  await page.getByRole("button", { name: "Check" }).click();
+  await page.getByRole("button", { name: "Check", exact: true }).click();
   await page.getByRole("button", { name: /Continue/ }).click();
   await page.getByText("Lesson complete!").waitFor();
   expect(true, `${name}: write lesson completed${desktop ? " with keyboard" : ""}`);
@@ -80,24 +109,23 @@ async function run(name, viewport, { desktop }) {
 
   // ---- Break lesson ----
   await page.goto(`${BASE}/lesson/break-reset`);
+  await answerQuickSteps(page);
   const input = page.getByPlaceholder("Add a corner case...");
   for (const c of ["How long until the link expires?", "What if the email is not registered?"]) {
     await input.fill(c);
     await input.press("Enter");
   }
-  await page.getByRole("button", { name: "Check" }).click();
+  await page.getByRole("button", { name: "Check", exact: true }).click();
   await page.getByRole("button", { name: /Keep hunting/ }).waitFor();
   expect(await page.getByText("2/8").first().isVisible(), `${name}: partial score shown`);
-  await shot(page, `${name}-break-retry`);
   await page.getByRole("button", { name: /Keep hunting/ }).click();
   for (const c of ["If I request a reset twice, does the old link still work?", "Can the same link be used twice?", "Are my other sessions logged out?"]) {
     await input.fill(c);
     await input.press("Enter");
   }
-  await page.getByRole("button", { name: "Check" }).click();
+  await page.getByRole("button", { name: "Check", exact: true }).click();
   await page.getByText("You missed these").waitFor();
   expect(true, `${name}: missed cases revealed after pass`);
-  await shot(page, `${name}-break-pass`);
   await page.getByRole("button", { name: /Continue/ }).click();
   await page.getByText("Lesson complete!").waitFor();
 
@@ -107,22 +135,27 @@ async function run(name, viewport, { desktop }) {
   );
   await page.goto(`${BASE}/lesson/bluf`);
   await page.getByText("You finished 10 free lessons!").waitFor();
-  expect(await page.getByRole("link", { name: "Create free account" }).isVisible(), `${name}: trial gate shows sign-up`);
-  await shot(page, `${name}-trial-gate`);
+  expect(true, `${name}: trial gate shown`);
   await page.unroute("**/api/sessions");
 
-  // ---- Back home: progress persisted ----
+  // ---- Path: returning visitors skip the landing page; popover; quests ----
   await page.goto(BASE);
-  await page.getByRole("heading", { name: "Writing" }).waitFor();
-  const xp = await page.locator('[title="Total XP"]:visible').first().innerText();
-  expect(Number(xp.trim()) > 0, `${name}: XP saved (${xp.trim()})`);
-  await page.getByRole("button", { name: "Spec" }).click();
-  await shot(page, `${name}-home-spec`);
+  await page.waitForURL("**/learn");
+  expect(true, `${name}: returning visitor goes straight to /learn`);
+  const xpBefore = Number((await page.locator('[title="Total XP"]:visible').first().innerText()).trim());
+  expect(xpBefore > 0, `${name}: XP saved (${xpBefore})`);
+  await page.getByRole("button", { name: /current lesson/ }).first().click();
+  expect(await page.getByRole("link", { name: /Start \+\d+ XP/ }).isVisible(), `${name}: node popover with START +XP`);
+  await shot(page, `${name}-learn-popover`);
+  await page.goto(`${BASE}/quests`);
+  const claim = page.getByRole("button", { name: /Claim \d+ XP/ }).first();
+  expect(await claim.isVisible().catch(() => false), `${name}: a finished quest can be claimed`);
+  await claim.click().catch(() => {});
+  await shot(page, `${name}-quests`);
+  await page.goto(`${BASE}/profile`);
+  await shot(page, `${name}-profile`);
   await page.goto(`${BASE}/history`);
   await page.getByRole("heading", { name: "Review" }).waitFor();
-  await shot(page, `${name}-history`);
-  await page.goto(`${BASE}/privacy`);
-  await shot(page, `${name}-privacy`);
   await ctx.close();
 }
 

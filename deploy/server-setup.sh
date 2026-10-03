@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ONE-TIME server setup (needs your sudo password once). Run from your laptop:
 #
-#   ssh -t jyotipravat@69.62.85.167 'curl -fsSL https://raw.githubusercontent.com/jyotipravatiitm/clarifyme/HEAD/deploy/server-setup.sh | sudo bash -s -- jyotipravat clarifyme.maidocs.in'
+#   ssh -t jyotipravat@69.62.85.167 'curl -fsSL -H "Accept: application/vnd.github.raw" https://api.github.com/repos/jyotipravatiitm/clarifyme/contents/deploy/server-setup.sh | sudo bash -s -- jyotipravat clarity.maidocs.in'
 #
 # Optional 3rd argument: the local port for the app behind nginx (default: APP_PORT
 # from .env, else the first free port from 3417).
@@ -12,7 +12,7 @@
 set -euo pipefail
 
 DEPLOY_USER="${1:-${SUDO_USER:-}}"
-DOMAIN="${2:-clarifyme.maidocs.in}"
+DOMAIN="${2:-clarity.maidocs.in}"
 WANT_PORT="${3:-}"
 [ "$(id -u)" -eq 0 ] || { echo "Run with sudo (see the comment at the top)." >&2; exit 1; }
 [ -n "$DEPLOY_USER" ] && id "$DEPLOY_USER" >/dev/null 2>&1 || { echo "Usage: sudo bash server-setup.sh <user> [domain]" >&2; exit 1; }
