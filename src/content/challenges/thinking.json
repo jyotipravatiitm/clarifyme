@@ -1,0 +1,72 @@
+[
+  {
+    "id": "t-claim-1",
+    "kind": "write",
+    "title": "What is the actual claim?",
+    "skill": "Claim + reason",
+    "xp": 15,
+    "prompt": "Read the paragraph. Write its main claim and its main reason in ONE sentence: \"<claim> because <reason>.\" 30 words max.",
+    "source": "Look, everyone keeps talking about microservices, and sure, they're trendy. But our team is six people. Every new service is another thing to deploy, monitor and wake up for at night. Last quarter we spent more time on pipeline glue than on features. I'm not saying never, but right now a modular monolith would let us ship faster.",
+    "intent": "Claim: the team should use a modular monolith (not microservices) for now. Reason: with only six people, each extra service adds deploy/monitoring/on-call overhead that slowed feature work last quarter.",
+    "rules": [{ "id": "totalWords" }, { "id": "vagueWords" }],
+    "options": { "maxTotalWords": 30 },
+    "mustMention": [["monolith"], ["because", "since", "as"], ["six", "6", "small", "overhead", "deploy", "operat"]],
+    "placeholder": "We should ... because ...",
+    "hints": ["Skip the opinions about trends. What does the writer want the team to DO?", "Which fact supports it?"],
+    "exampleGood": "Our six-person team should build a modular monolith for now because each extra service adds deploy and on-call work that already slowed features."
+  },
+  {
+    "id": "t-assume-1",
+    "kind": "break",
+    "title": "Four-day week",
+    "skill": "Hidden assumptions",
+    "xp": 20,
+    "huntFor": "hidden assumptions",
+    "prompt": "This argument jumps from evidence to a conclusion. List the unstated assumptions it needs to be true. One per line.",
+    "spec": "A company in Iceland moved to a four-day work week and its productivity rose 20%. Therefore, if we switch to a four-day week, our productivity will also rise about 20%.",
+    "hiddenCases": [
+      { "id": "similar-company", "title": "Same kind of company", "description": "Assumes our company (industry, type of work, size) is similar enough to the Iceland company for the result to carry over.", "keywords": [["similar", "same", "different", "industry", "type of work", "comparable", "like us", "size"]] },
+      { "id": "causation", "title": "The four-day week caused it", "description": "Assumes the four-day week caused the rise, not something else that changed at the same time (new tools, economy, hiring).", "keywords": [["cause", "caused", "because of", "something else", "other factor", "coincid", "correlat", "at the same time"]] },
+      { "id": "measurement", "title": "Productivity measured the same way", "description": "Assumes 'productivity' means the same thing and is measured the same way at both companies (output per hour vs per week, etc.).", "keywords": [["measure", "metric", "defin", "per hour", "per week", "how productivity"]] },
+      { "id": "one-sample", "title": "One case generalizes", "description": "Assumes a single company's result is reliable and not a fluke or a cherry-picked example.", "keywords": [["one company", "single", "sample", "fluke", "cherry", "outlier", "only one", "anecdot"]] },
+      { "id": "lasts", "title": "Effect lasts", "description": "Assumes the gain persists over time and is not a short-term novelty effect.", "keywords": [["last", "long term", "long-term", "novelty", "temporary", "short term", "short-term", "fade", "over time"]] },
+      { "id": "culture-law", "title": "Context transfers", "description": "Assumes national context (culture, labor law, workforce) does not matter.", "keywords": [["iceland", "country", "culture", "law", "national"]] }
+    ],
+    "minToPass": 3,
+    "hints": ["Ask: what if our company is nothing like that one?", "Ask: did anything else change at the same time?"]
+  },
+  {
+    "id": "t-steel-1",
+    "kind": "write",
+    "title": "Steelman the other side",
+    "skill": "Steelmanning",
+    "xp": 20,
+    "prompt": "You think code review should be required for every change. Write the STRONGEST honest argument against that, in 2 sentences. A fan of the other side should nod.",
+    "intent": "A strong, fair argument against mandatory review of every change, e.g.: mandatory review on every change adds waiting time and context switching that slows delivery, and for small, low-risk or easily reversible changes with good tests and fast rollback, the cost of the delay can exceed the bugs it catches. Must not be a strawman (e.g. 'reviews are useless' or 'people are lazy').",
+    "rules": [{ "id": "vagueWords" }, { "id": "sentenceLength" }],
+    "options": { "maxWords": 30 },
+    "mustMention": [["slow", "wait", "delay", "time", "speed", "bottleneck", "cost"], ["small", "low-risk", "low risk", "trivial", "revert", "rollback", "test", "tests"]],
+    "placeholder": "Requiring review on every change ...",
+    "hints": ["What does a mandatory review cost, every single time?", "For which changes is that cost bigger than the benefit?"],
+    "exampleGood": "Mandatory review makes every change wait for another person, which slows delivery and breaks focus. For small, well-tested changes that are easy to roll back, that delay costs more than the few bugs review would catch."
+  },
+  {
+    "id": "t-assume-2",
+    "kind": "break",
+    "title": "The 5-star app",
+    "skill": "Hidden assumptions",
+    "xp": 20,
+    "huntFor": "hidden assumptions",
+    "prompt": "List what this conclusion quietly assumes. One per line.",
+    "spec": "Our app has a 4.9-star average rating in the app store, so our users love the app and we don't need to change anything.",
+    "hiddenCases": [
+      { "id": "who-reviews", "title": "Reviewers represent users", "description": "Assumes the people who leave reviews are representative of all users (unhappy users may just leave silently).", "keywords": [["represent", "who leaves", "who writes", "who review", "silent", "most users", "all users", "small fraction", "few users", "bias"]] },
+      { "id": "churn", "title": "Leavers are counted", "description": "Assumes people who uninstalled or churned are reflected in the rating (they often are not).", "keywords": [["churn", "uninstall", "left", "leave", "stopped using", "quit", "retention"]] },
+      { "id": "prompt-timing", "title": "Ratings are not engineered", "description": "Assumes the rating is not inflated by when/how the app asks for reviews (e.g. only prompting after a success moment) or by fake/incentivized reviews.", "keywords": [["prompt", "ask", "incentiv", "fake", "timing", "inflat", "pop-up", "popup", "reward"]] },
+      { "id": "love-vs-ok", "title": "High rating = love", "description": "Assumes a high star rating means users love it, rather than finding it acceptable or rating it once long ago.", "keywords": [["love", "satisf", "acceptable", "fine", "okay", "old ratings", "outdated", "long ago", "version"]] },
+      { "id": "no-change", "title": "Good now = no change needed", "description": "Assumes that being liked today means nothing needs to change (competitors, growth, new needs, technical debt).", "keywords": [["compet", "grow", "future", "new users", "market", "debt", "improve", "change"]] }
+    ],
+    "minToPass": 3,
+    "hints": ["Who does NOT leave a review?", "Does liking it today mean it will win tomorrow?"]
+  }
+]

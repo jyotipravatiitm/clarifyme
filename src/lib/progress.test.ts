@@ -1,0 +1,27 @@
+import { describe, expect, it } from "vitest";
+import { DEFAULT_PROGRESS, applyLessonResult, withFreshDay } from "./progress";
+
+describe("progress", () => {
+  it("adds XP, keeps best stars, and extends the streak once the daily goal is met", () => {
+    const a = applyLessonResult(DEFAULT_PROGRESS, "l1", 2, 20, "2026-10-01");
+    expect(a.next.xp).toBe(20);
+    expect(a.reward.streakExtended).toBe(false);
+    const b = applyLessonResult(a.next, "l1", 1, 15, "2026-10-01");
+    expect(b.next.completed.l1).toEqual({ stars: 2, xp: 20 });
+    expect(b.reward.goalReached).toBe(true);
+    expect(b.reward.streakExtended).toBe(true);
+    expect(b.next.streak).toBe(1);
+    const c = applyLessonResult(b.next, "l2", 3, 30, "2026-10-01");
+    expect(c.reward.streakExtended).toBe(false);
+    expect(c.next.streak).toBe(1);
+  });
+
+  it("continues the streak the next day and resets it after a missed day", () => {
+    const day1 = applyLessonResult(DEFAULT_PROGRESS, "l1", 3, 30, "2026-10-01").next;
+    const day2 = applyLessonResult(day1, "l2", 3, 30, "2026-10-02").next;
+    expect(day2.streak).toBe(2);
+    expect(day2.dailyXp).toBe(30);
+    expect(withFreshDay(day2, "2026-10-04").streak).toBe(0);
+    expect(withFreshDay(day2, "2026-10-03").streak).toBe(2);
+  });
+});

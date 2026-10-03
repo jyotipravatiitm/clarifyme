@@ -1,0 +1,77 @@
+[
+  {
+    "id": "writing",
+    "title": "Writing",
+    "tagline": "Say it so it can only mean one thing.",
+    "color": "green",
+    "units": [
+      {
+        "id": "w-unit-1",
+        "title": "Say it plainly",
+        "description": "Short sentences, active voice, simple words.",
+        "lessons": [
+          { "id": "plain-steps", "title": "Plain steps", "icon": "wrench", "steps": ["w-ste-1", "w-ste-2"] },
+          { "id": "simple-words", "title": "Simple words", "icon": "feather", "steps": ["w-upgoer-1", "w-upgoer-2"] },
+          { "id": "bluf", "title": "Bottom line first", "icon": "target", "steps": ["w-bluf-1"] }
+        ]
+      },
+      {
+        "id": "w-unit-2",
+        "title": "Say it once",
+        "description": "Remove every second meaning.",
+        "lessons": [
+          { "id": "no-vague", "title": "Make it testable", "icon": "ruler", "steps": ["w-vague-1", "w-andor-1"] },
+          { "id": "pronouns", "title": "Who is \"it\"?", "icon": "pointer", "steps": ["w-ambig-1"] },
+          { "id": "ears", "title": "EARS requirements", "icon": "ear", "steps": ["w-ears-1", "w-ears-2"] }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "thinking",
+    "title": "Thinking",
+    "tagline": "See what an argument really says, and what it hides.",
+    "color": "purple",
+    "units": [
+      {
+        "id": "t-unit-1",
+        "title": "Find the claim",
+        "description": "Claims, reasons and the assumptions in between.",
+        "lessons": [
+          { "id": "claim-reason", "title": "Claim + reason", "icon": "target", "steps": ["t-claim-1"] },
+          { "id": "assumptions", "title": "Hidden assumptions", "icon": "search", "steps": ["t-assume-1"] },
+          { "id": "steelman", "title": "Steelman", "icon": "shield", "steps": ["t-steel-1"] },
+          { "id": "assumptions-2", "title": "Too good to be true", "icon": "star", "steps": ["t-assume-2"] }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "spec",
+    "title": "Spec",
+    "tagline": "Think like TLA+: what must always be true?",
+    "color": "blue",
+    "units": [
+      {
+        "id": "s-unit-1",
+        "title": "Break the spec",
+        "description": "Find the cases loose wording forgot.",
+        "lessons": [
+          { "id": "break-reset", "title": "Password reset", "icon": "key", "steps": ["s-break-reset"] },
+          { "id": "break-refund", "title": "Refund policy", "icon": "receipt", "steps": ["s-break-refund"] },
+          { "id": "break-meeting", "title": "Meeting scheduler", "icon": "calendar", "steps": ["s-break-meeting"] }
+        ]
+      },
+      {
+        "id": "s-unit-2",
+        "title": "Write the invariant",
+        "description": "State the rule that must hold in every state.",
+        "lessons": [
+          { "id": "inv-transfer", "title": "Bank transfer", "icon": "bank", "steps": ["s-inv-transfer"] },
+          { "id": "inv-door", "title": "Elevator door", "icon": "door", "steps": ["s-inv-door"] },
+          { "id": "inv-lockout", "title": "Login lockout", "icon": "lock", "steps": ["s-inv-lockout"] }
+        ]
+      }
+    ]
+  }
+]

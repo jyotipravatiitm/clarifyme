@@ -1,0 +1,112 @@
+[
+  {
+    "id": "s-break-reset",
+    "kind": "break",
+    "title": "Password reset",
+    "skill": "Corner cases",
+    "xp": 25,
+    "huntFor": "corner cases",
+    "prompt": "A teammate wrote this spec. Find the situations it does not answer, where two engineers could build two different things. One per line.",
+    "spec": "When a user forgets their password, they enter their email and we send them a reset link. Clicking the link lets them choose a new password. The link expires after a while.",
+    "hiddenCases": [
+      { "id": "expiry-time", "title": "How long is 'a while'?", "description": "The expiry time is not defined (15 minutes? 24 hours?).", "keywords": [["while", "how long", "expir", "minutes", "hours", "time limit"]] },
+      { "id": "unknown-email", "title": "Email not registered", "description": "What happens when the email is not registered? Do we say so (leaks which emails exist) or show the same message?", "keywords": [["not registered", "no account", "doesn't exist", "does not exist", "unknown", "wrong email", "not found", "isn't registered", "enumerat"]] },
+      { "id": "multiple-links", "title": "Several reset requests", "description": "If the user asks twice, do older links still work, or does a new link cancel the old ones?", "keywords": [["twice", "multiple", "several", "again", "second link", "old link", "older", "previous", "more than one", "many"]] },
+      { "id": "reuse", "title": "Link used twice", "description": "Can a link be used more than once after the password is changed?", "keywords": [["reuse", "re-use", "used twice", "use again", "one-time", "single use", "single-use", "after use", "already used", "click again"]] },
+      { "id": "sessions", "title": "Other sessions", "description": "After the reset, are other logged-in sessions/devices signed out?", "keywords": [["session", "logged in", "signed in", "log out", "sign out", "other device", "devices"]] },
+      { "id": "rate-limit", "title": "Spam / abuse", "description": "Is there a limit on how many reset emails can be requested (spam, abuse)?", "keywords": [["rate", "limit", "spam", "abuse", "flood", "bot", "too many"]] },
+      { "id": "password-rules", "title": "New password rules", "description": "What rules apply to the new password? Can it equal the old one?", "keywords": [["same password", "old password", "previous password", "password rule", "strength", "requirement", "weak", "length", "complex"]] },
+      { "id": "no-access", "title": "Lost email access", "description": "What if the user no longer has access to that email address?", "keywords": [["access to", "lost email", "old email", "no longer", "can't access", "cannot access", "changed email", "recovery"]] }
+    ],
+    "minToPass": 4,
+    "hints": ["Read every vague word and ask 'how much, exactly?'", "Think like an attacker. Think like a user who clicks everything twice."]
+  },
+  {
+    "id": "s-break-refund",
+    "kind": "break",
+    "title": "Refund policy",
+    "skill": "Corner cases",
+    "xp": 25,
+    "huntFor": "corner cases",
+    "prompt": "Support agents will apply this policy word for word. Where will two agents decide differently? One case per line.",
+    "spec": "Customers can get a full refund within 30 days of purchase if they are not satisfied. Items must be returned in their original condition.",
+    "hiddenCases": [
+      { "id": "day-count", "title": "Which 30 days?", "description": "Does day 1 start at purchase, shipping, or delivery? Calendar or business days? Which time zone ends day 30?", "keywords": [["deliver", "ship", "start", "business day", "calendar", "time zone", "timezone", "day 30", "count", "arrive"]] },
+      { "id": "condition", "title": "What is 'original condition'?", "description": "Opened box? Tried on? Missing tags or packaging?", "keywords": [["opened", "packag", "box", "tag", "used", "tried", "worn", "original condition", "condition"]] },
+      { "id": "full-refund", "title": "What is 'full'?", "description": "Does 'full refund' include shipping fees and return shipping? Who pays return postage?", "keywords": [["shipping", "postage", "fee", "return cost", "delivery cost"]] },
+      { "id": "satisfied", "title": "Who judges 'not satisfied'?", "description": "Must the customer give a reason? Can an agent refuse because the reason is weak?", "keywords": [["satisf", "reason", "prove", "why", "justif"]] },
+      { "id": "sale-gift", "title": "Discounts, gifts, bundles", "description": "Refund amount for discounted items, gift purchases, coupons, or items in a bundle.", "keywords": [["discount", "sale", "coupon", "gift", "bundle", "promo", "free"]] },
+      { "id": "payment-method", "title": "Refund to where?", "description": "Refund to the original payment method, store credit, or cash? What if that card is closed?", "keywords": [["payment method", "card", "store credit", "credit", "cash", "original payment", "bank"]] },
+      { "id": "partial", "title": "Partial returns", "description": "Can a customer return part of an order, or a damaged/faulty item outside 30 days?", "keywords": [["part of", "partial", "some items", "one item", "faulty", "damaged", "defect", "broken", "warranty"]] }
+    ],
+    "minToPass": 4,
+    "hints": ["Every noun in the spec hides a question: which purchase? which day? which condition?", "Think about money: shipping, coupons, gift cards."]
+  },
+  {
+    "id": "s-break-meeting",
+    "kind": "break",
+    "title": "Meeting scheduler",
+    "skill": "Corner cases",
+    "xp": 25,
+    "huntFor": "corner cases",
+    "prompt": "This is the whole spec for a 'find a time' feature. Find the cases it does not cover. One per line.",
+    "spec": "The scheduler looks at everyone's calendar and books the first free one-hour slot next week during working hours.",
+    "hiddenCases": [
+      { "id": "time-zones", "title": "Time zones", "description": "Whose working hours, when attendees are in different time zones?", "keywords": [["time zone", "timezone", "zones", "different countr", "abroad", "utc"]] },
+      { "id": "no-slot", "title": "No free slot", "description": "What if there is no common free hour next week?", "keywords": [["no free", "no slot", "no time", "none", "nothing free", "fully booked", "no common", "no available", "can't find", "cannot find"]] },
+      { "id": "tentative", "title": "Tentative / private events", "description": "How to treat tentative, private, or 'free' marked events, and all-day events?", "keywords": [["tentative", "private", "all-day", "all day", "maybe", "optional", "out of office", "ooo", "holiday", "status"]] },
+      { "id": "optional-attendees", "title": "Optional attendees", "description": "Must everyone be free, or only required attendees? What about rooms?", "keywords": [["optional", "required", "everyone", "room", "attendee", "who must"]] },
+      { "id": "first", "title": "Which is 'first'?", "description": "First by time from Monday 00:00 in whose zone? Prefer mornings? Does it skip lunch?", "keywords": [["first", "earliest", "lunch", "prefer", "order", "monday"]] },
+      { "id": "race", "title": "Race / double booking", "description": "Someone's calendar changes between checking and booking; two schedulers grab the same slot.", "keywords": [["race", "same time", "double", "concurren", "changes", "meanwhile", "between checking", "conflict"]] },
+      { "id": "next-week", "title": "What is 'next week'?", "description": "Calendar week vs next 7 days; asked on a Sunday; public holidays.", "keywords": [["next week", "7 days", "seven days", "sunday", "holiday", "week start", "which week"]] },
+      { "id": "permissions", "title": "Calendar access", "description": "What if the scheduler cannot read someone's calendar (permissions, external guests)?", "keywords": [["permission", "access", "external", "can't see", "cannot see", "can't read", "cannot read", "guest", "outside", "privacy"]] }
+    ],
+    "minToPass": 4,
+    "hints": ["Think about a team in London and San Francisco.", "Think about what happens when the answer is 'nothing'."]
+  },
+  {
+    "id": "s-inv-transfer",
+    "kind": "write",
+    "title": "Bank transfer invariant",
+    "skill": "Invariants",
+    "xp": 25,
+    "prompt": "Write the rule that must ALWAYS be true about a money transfer between two accounts in the same bank, no matter when it fails. One or two sentences, with \"must\".",
+    "intent": "Money is conserved: at every moment (including if the transfer fails midway), the sum of the two balances equals the sum before the transfer; the debit and the credit happen together or not at all (atomic). Optionally: the sender's balance must never go below zero (or below the overdraft limit).",
+    "rules": [{ "id": "modalKeywords", "severity": "error" }, { "id": "vagueWords", "severity": "error" }, { "id": "ambiguousPronoun" }],
+    "options": { "requireModal": true },
+    "mustMention": [["total", "sum", "combined", "together", "both"], ["fail", "failure", "crash", "midway", "partial", "all or nothing", "or neither", "never"]],
+    "placeholder": "At every moment, ...",
+    "hints": ["Imagine the server crashes right after taking the money out of account A.", "What number should never change?"],
+    "exampleGood": "At every moment, the sum of the two account balances must equal the sum before the transfer started. The debit from A and the credit to B must both happen or neither happens."
+  },
+  {
+    "id": "s-inv-door",
+    "kind": "write",
+    "title": "Elevator door safety",
+    "skill": "Invariants",
+    "xp": 25,
+    "prompt": "Write the safety rule for an elevator that must hold in every state. One sentence with \"must\" or \"must not\".",
+    "intent": "The elevator car must never move unless its doors are fully closed (equivalently: the doors must never be open while the car is moving, and the doors must only open when the car is stopped at a floor).",
+    "rules": [{ "id": "modalKeywords", "severity": "error" }, { "id": "vagueWords", "severity": "error" }, { "id": "ambiguousPronoun", "severity": "error" }],
+    "options": { "requireModal": true },
+    "mustMention": [["door", "doors"], ["move", "moving", "motion"], ["closed", "close", "shut", "open"]],
+    "placeholder": "The elevator car must ...",
+    "hints": ["Which two things must never be true at the same time?", "\"The elevator\" could mean the car or the whole system. Be exact."],
+    "exampleGood": "The elevator car must not move unless all of its doors are fully closed and locked."
+  },
+  {
+    "id": "s-inv-lockout",
+    "kind": "write",
+    "title": "Login lockout rule",
+    "skill": "Invariants",
+    "xp": 25,
+    "prompt": "Write a precise lockout rule: after too many wrong passwords, the account locks. Make every number and every 'reset' explicit. Two sentences max.",
+    "intent": "After N (a number) consecutive failed login attempts for one account within a fixed window, the account is locked for a fixed duration (or until an admin unlocks it); a successful login resets the failure counter. Numbers must be explicit; 'consecutive' or the time window must be defined.",
+    "rules": [{ "id": "modalKeywords", "severity": "error" }, { "id": "vagueWords", "severity": "error" }, { "id": "ambiguousPronoun" }, { "id": "sentenceLength" }],
+    "options": { "requireModal": true, "maxWords": 30 },
+    "mustMention": [["consecutive", "in a row", "within"], ["minute", "minutes", "hour", "hours", "admin"], ["reset", "resets", "success"]],
+    "placeholder": "After 5 ...",
+    "hints": ["Does the count reset after a success? After time?", "Does 'locked' last forever?"],
+    "exampleGood": "After 5 consecutive failed login attempts on one account, the system must lock that account for 15 minutes. A successful login must reset the failed-attempt count to 0."
+  }
+]

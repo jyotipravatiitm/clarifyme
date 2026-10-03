@@ -1,0 +1,193 @@
+@import "tailwindcss";
+
+/* ---------- Theme tokens ---------- */
+:root {
+  --bg: #ffffff;
+  --bg-soft: #f6f7fb;
+  --surface: #ffffff;
+  --border: #e5e7ef;
+  --text: #2b2d42;
+  --text-soft: #6b6f85;
+
+  --brand: #1fb88a;
+  --brand-shade: #138a66;
+  --brand-tint: #d9f7ec;
+
+  --writing: #34c759;
+  --writing-shade: #239b42;
+  --thinking: #a660f0;
+  --thinking-shade: #7c3fc4;
+  --spec: #2f8cf0;
+  --spec-shade: #1d65b8;
+
+  --good: #34c759;
+  --good-shade: #239b42;
+  --good-bg: #e3fbe8;
+  --good-text: #1d7a35;
+  --bad: #ff6b3d;
+  --bad-shade: #d9481c;
+  --bad-bg: #fff0ea;
+  --bad-text: #c23e14;
+
+  --gold: #ffc23d;
+  --gold-shade: #e09b00;
+  --heart: #ff4d6d;
+  --flame: #ff8a1f;
+  --locked: #e3e5ec;
+  --locked-shade: #c4c7d3;
+
+  --mark-error: #ffd6c8;
+  --mark-warn: #ffeaa6;
+  --mark-tip: #d6e8ff;
+  --mark-ce: #ead9ff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131722;
+    --bg-soft: #1b2030;
+    --surface: #1b2030;
+    --border: #2c3348;
+    --text: #eef0f7;
+    --text-soft: #a3a9bf;
+    --brand-tint: #123b31;
+    --good-bg: #13321e;
+    --good-text: #7be39a;
+    --bad-bg: #3a1d14;
+    --bad-text: #ffab8f;
+    --locked: #2c3348;
+    --locked-shade: #20263a;
+    --mark-error: #6a2f1d;
+    --mark-warn: #5c4a12;
+    --mark-tip: #1d3a5f;
+    --mark-ce: #44306a;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #131722;
+  --bg-soft: #1b2030;
+  --surface: #1b2030;
+  --border: #2c3348;
+  --text: #eef0f7;
+  --text-soft: #a3a9bf;
+  --brand-tint: #123b31;
+  --good-bg: #13321e;
+  --good-text: #7be39a;
+  --bad-bg: #3a1d14;
+  --bad-text: #ffab8f;
+  --locked: #2c3348;
+  --locked-shade: #20263a;
+  --mark-error: #6a2f1d;
+  --mark-warn: #5c4a12;
+  --mark-tip: #1d3a5f;
+  --mark-ce: #44306a;
+}
+
+@theme inline {
+  --font-sans: var(--font-nunito), ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+  --color-bg: var(--bg);
+  --color-bg-soft: var(--bg-soft);
+  --color-surface: var(--surface);
+  --color-line: var(--border);
+  --color-ink: var(--text);
+  --color-ink-soft: var(--text-soft);
+  --color-brand: var(--brand);
+  --color-brand-shade: var(--brand-shade);
+  --color-brand-tint: var(--brand-tint);
+  --color-good: var(--good);
+  --color-good-bg: var(--good-bg);
+  --color-good-text: var(--good-text);
+  --color-bad: var(--bad);
+  --color-bad-bg: var(--bad-bg);
+  --color-bad-text: var(--bad-text);
+  --color-gold: var(--gold);
+  --color-gold-shade: var(--gold-shade);
+  --color-heart: var(--heart);
+  --color-flame: var(--flame);
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-weight: 600;
+}
+
+/* ---------- Chunky 3D buttons ---------- */
+.btn3d {
+  --c: var(--brand);
+  --s: var(--brand-shade);
+  --fg: #fff;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 16px;
+  padding: 0.85rem 1.4rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.95rem;
+  color: var(--fg);
+  background: var(--c);
+  box-shadow: 0 4px 0 var(--s);
+  transition: transform 80ms ease, box-shadow 80ms ease, filter 120ms ease;
+  user-select: none;
+}
+.btn3d:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+.btn3d:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--s);
+}
+.btn3d:disabled {
+  --c: var(--locked);
+  --s: var(--locked-shade);
+  --fg: var(--text-soft);
+  cursor: not-allowed;
+}
+.btn3d:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--c) 45%, transparent);
+  outline-offset: 3px;
+}
+.btn3d.good { --c: var(--good); --s: var(--good-shade); }
+.btn3d.bad { --c: var(--bad); --s: var(--bad-shade); }
+.btn3d.gold { --c: var(--gold); --s: var(--gold-shade); --fg: #4a3500; }
+.btn3d.ghost {
+  --c: var(--surface);
+  --s: var(--border);
+  --fg: var(--text-soft);
+  border: 2px solid var(--border);
+}
+.btn3d.writing { --c: var(--writing); --s: var(--writing-shade); }
+.btn3d.thinking { --c: var(--thinking); --s: var(--thinking-shade); }
+.btn3d.spec { --c: var(--spec); --s: var(--spec-shade); }
+
+/* Cards with a soft "pressed" bottom edge */
+.card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 2px 0 var(--border);
+}
+
+/* Highlight marks in the answer view */
+.mark-error { background: var(--mark-error); border-bottom: 2px solid var(--bad); }
+.mark-warn { background: var(--mark-warn); border-bottom: 2px dashed var(--gold-shade); }
+.mark-tip { background: var(--mark-tip); border-bottom: 2px dotted var(--spec); }
+.mark-ce { background: var(--mark-ce); border-bottom: 2px solid var(--thinking); }
+mark { color: inherit; border-radius: 4px; padding: 0 1px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
