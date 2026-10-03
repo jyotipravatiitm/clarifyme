@@ -45,7 +45,7 @@ Open https://github.com/jyotipravatiitm/clarifyme/settings/secrets/actions and a
 | Secret name | Value | Needed? |
 |---|---|---|
 | `VPS_SSH_KEY` | the whole content of `~/.ssh/clarifyme_deploy` (the private file, including the `-----BEGIN`/`END` lines). Mac: `pbcopy < ~/.ssh/clarifyme_deploy` | **yes** |
-| `CLERK_PUBLISHABLE_KEY` | `pk_test_…` from dashboard.clerk.com → API keys | for accounts |
+| `CLERK_PUBLISHABLE_KEY` | `pk_test_…` from dashboard.clerk.com → API keys (the name `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` also works) | for accounts; needs both Clerk keys |
 | `CLERK_SECRET_KEY` | `sk_test_…` | for accounts |
 | `GA_MEASUREMENT_ID` | `G-…` from Google Analytics | optional: defaults to `G-GQ27VPM6QY` |
 | `LLM_API_KEY`, `LLM_MODEL`, `LLM_BASE_URL`, `OPENROUTER_API_KEY` | AI providers | optional |

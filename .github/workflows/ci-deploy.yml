@@ -129,7 +129,7 @@ jobs:
       - name: Prepare settings from GitHub secrets
         if: env.HAS_KEY == 'true'
         env:
-          CLERK_PK: ${{ secrets.CLERK_PUBLISHABLE_KEY || vars.CLERK_PUBLISHABLE_KEY }}
+          CLERK_PK: ${{ secrets.CLERK_PUBLISHABLE_KEY || secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || vars.CLERK_PUBLISHABLE_KEY || vars.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
           CLERK_SK: ${{ secrets.CLERK_SECRET_KEY }}
           GA_ID: ${{ secrets.GA_MEASUREMENT_ID || vars.GA_MEASUREMENT_ID || 'G-GQ27VPM6QY' }}
           GA_CONSENT: ${{ vars.GA_CONSENT }}
@@ -141,6 +141,11 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
           umask 077
+          if [ -n "$CLERK_PK" ] && [ -z "$CLERK_SK" ]; then
+            echo "::warning title=Sign-in is off::Add the GitHub secret CLERK_SECRET_KEY (sk_...). Clerk needs both keys."
+          elif [ -z "$CLERK_PK" ] && [ -n "$CLERK_SK" ]; then
+            echo "::warning title=Sign-in is off::Add the GitHub secret CLERK_PUBLISHABLE_KEY (pk_...). Clerk needs both keys."
+          fi
           {
             echo "DOMAIN=$APP_DOMAIN"
             # Only settings that are set in GitHub are sent; others keep their value on the server.
