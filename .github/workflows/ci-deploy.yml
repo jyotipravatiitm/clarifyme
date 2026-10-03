@@ -112,9 +112,15 @@ jobs:
             IdentityFile $HOME/.ssh/deploy_key
             UserKnownHostsFile $HOME/.ssh/known_hosts
             IdentitiesOnly yes
+            BatchMode yes
+            ConnectTimeout 20
             ServerAliveInterval 30
           CFG
           # First deploy: make sure the server has rsync and the app folder.
+          if ! ssh -F ~/.ssh/config vps true; then
+            echo "::error title=SSH login refused::The server did not accept VPS_SSH_KEY for user '$VPS_USER'. Add the deploy key's .pub to /home/$VPS_USER/.ssh/authorized_keys (or /root/.ssh/authorized_keys for root), or set the VPS_USER variable to the user that has it. See DEPLOY.md."
+            exit 1
+          fi
           ssh -F ~/.ssh/config vps "mkdir -p ~/$APP_DIR && (command -v rsync >/dev/null || (apt-get update -qq && apt-get install -y -qq rsync) || sudo -n sh -c 'apt-get update -qq && apt-get install -y -qq rsync')"
 
       - name: Prepare settings from GitHub secrets
