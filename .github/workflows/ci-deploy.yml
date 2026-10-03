@@ -1,0 +1,180 @@
+name: CI & Deploy
+
+# Every push and pull request is tested.
+# Pushes to the default branch (and manual runs) are then deployed to the VPS.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  test:
+    name: Lint, test, build, browser test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: clarifyme_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/clarifyme_test
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - name: Unit tests (with Postgres)
+        run: npm test
+      - run: npm run build
+      - name: Browser smoke test (real server + Postgres + cookie banner)
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/clarifyme_e2e
+          NEXT_PUBLIC_GA_ID: G-CITEST000
+          PORT: "3123"
+          HOSTNAME: 127.0.0.1
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -c "create database clarifyme_e2e"
+          cp -r .next/static .next/standalone/.next/static
+          (cd .next/standalone && node server.js > ../../server.log 2>&1 &)
+          for _ in $(seq 1 60); do curl -fsS http://127.0.0.1:3123/api/health && break; sleep 1; done
+          CHROMIUM_PATH="$(command -v google-chrome || command -v chromium)" BASE_URL=http://127.0.0.1:3123 node scripts/smoke.mjs
+      - name: Server log
+        if: always()
+        run: cat server.log || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: screenshots/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  deploy:
+    name: Deploy to VPS
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    environment:
+      name: production
+      url: https://${{ vars.APP_DOMAIN || 'clarifyme.maidocs.in' }}
+    env:
+      VPS_HOST: ${{ vars.VPS_HOST || '69.62.85.167' }}
+      VPS_USER: ${{ vars.VPS_USER || 'root' }}
+      VPS_PORT: ${{ vars.VPS_PORT || '22' }}
+      APP_DOMAIN: ${{ vars.APP_DOMAIN || 'clarifyme.maidocs.in' }}
+      APP_DIR: ${{ vars.APP_DIR || 'clarifyme' }}
+      HAS_KEY: ${{ secrets.VPS_SSH_KEY != '' }}
+    steps:
+      - name: Check setup
+        if: env.HAS_KEY != 'true'
+        run: |
+          echo "::warning title=Deploy skipped::Add the VPS_SSH_KEY repository secret (see DEPLOY.md), then re-run this workflow."
+      - uses: actions/checkout@v4
+        if: env.HAS_KEY == 'true'
+
+      - name: Set up SSH
+        if: env.HAS_KEY == 'true'
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
+          if [ -n "$VPS_KNOWN_HOSTS" ]; then printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else ssh-keyscan -p "$VPS_PORT" -H "$VPS_HOST" > ~/.ssh/known_hosts 2>/dev/null; fi
+          cat > ~/.ssh/config <<CFG
+          Host vps
+            HostName $VPS_HOST
+            User $VPS_USER
+            Port $VPS_PORT
+            IdentityFile $HOME/.ssh/deploy_key
+            UserKnownHostsFile $HOME/.ssh/known_hosts
+            IdentitiesOnly yes
+            ServerAliveInterval 30
+          CFG
+          # First deploy: make sure the server has rsync and the app folder.
+          ssh -F ~/.ssh/config vps "mkdir -p ~/$APP_DIR && (command -v rsync >/dev/null || (apt-get update -qq && apt-get install -y -qq rsync) || sudo -n sh -c 'apt-get update -qq && apt-get install -y -qq rsync')"
+
+      - name: Prepare settings from GitHub secrets
+        if: env.HAS_KEY == 'true'
+        env:
+          CLERK_PK: ${{ secrets.CLERK_PUBLISHABLE_KEY || vars.CLERK_PUBLISHABLE_KEY }}
+          CLERK_SK: ${{ secrets.CLERK_SECRET_KEY }}
+          GA_ID: ${{ secrets.GA_MEASUREMENT_ID || vars.GA_MEASUREMENT_ID }}
+          GA_CONSENT: ${{ vars.GA_CONSENT }}
+          FREE_LESSONS: ${{ vars.FREE_LESSONS }}
+          CERT_EMAIL: ${{ vars.CERT_EMAIL }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL || vars.LLM_BASE_URL }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL || vars.LLM_MODEL }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          umask 077
+          {
+            echo "DOMAIN=$APP_DOMAIN"
+            # Only settings that are set in GitHub are sent; others keep their value on the server.
+            [ -n "$CLERK_PK" ] && echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$CLERK_PK"
+            [ -n "$CLERK_SK" ] && echo "CLERK_SECRET_KEY=$CLERK_SK"
+            [ -n "$GA_ID" ] && echo "NEXT_PUBLIC_GA_ID=$GA_ID"
+            [ -n "$GA_CONSENT" ] && echo "NEXT_PUBLIC_GA_CONSENT=$GA_CONSENT"
+            [ -n "$FREE_LESSONS" ] && echo "FREE_LESSONS=$FREE_LESSONS"
+            [ -n "$CERT_EMAIL" ] && echo "CERT_EMAIL=$CERT_EMAIL"
+            [ -n "$LLM_BASE_URL" ] && echo "LLM_BASE_URL=$LLM_BASE_URL"
+            [ -n "$LLM_API_KEY" ] && echo "LLM_API_KEY=$LLM_API_KEY"
+            [ -n "$LLM_MODEL" ] && echo "LLM_MODEL=$LLM_MODEL"
+            [ -n "$OPENROUTER_API_KEY" ] && echo "OPENROUTER_API_KEY=$OPENROUTER_API_KEY"
+            true
+          } > "$RUNNER_TEMP/env.github"
+          grep -oE '^[A-Z_]+' "$RUNNER_TEMP/env.github" | sed 's/^/sending setting: /'
+
+      - name: Sync code and settings to the server
+        if: env.HAS_KEY == 'true'
+        run: |
+          echo "${GITHUB_SHA::7}" > .deployed-sha
+          rsync -az --delete --filter=':- .gitignore' \
+            --exclude '.git/' --exclude 'node_modules/' --exclude '.next/' \
+            --exclude '.env' --exclude '.env.*' --exclude '.deploy-mode' \
+            --exclude 'backups/' --exclude 'screenshots/' \
+            -e "ssh -F $HOME/.ssh/config" \
+            ./ "vps:$APP_DIR/"
+          # shellcheck disable=SC2029 # APP_DIR is meant to expand here, on the runner
+          ssh -F ~/.ssh/config vps "umask 077 && cat > ~/$APP_DIR/.env.github" < "$RUNNER_TEMP/env.github"
+          rm -f "$RUNNER_TEMP/env.github"
+
+      - name: Provision server, build and restart
+        if: env.HAS_KEY == 'true'
+        run: |
+          # shellcheck disable=SC2029 # APP_DIR is meant to expand here, on the runner
+          ssh -F ~/.ssh/config vps "bash ~/$APP_DIR/deploy/provision.sh && bash ~/$APP_DIR/deploy/deploy.sh"
+
+      - name: Health check
+        if: env.HAS_KEY == 'true'
+        run: |
+          for _ in $(seq 1 30); do
+            if out="$(curl -fsS "https://$APP_DOMAIN/api/health")"; then echo "$out"; echo "$out" | grep -q '"ok":true' && exit 0; fi
+            sleep 10
+          done
+          echo "::error::https://$APP_DOMAIN/api/health did not report ok. Check the 'Provision server' step log."
+          exit 1

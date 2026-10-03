@@ -1,5 +1,7 @@
 # ClarifyMe
 
+[![CI & Deploy](https://github.com/jyotipravatiitm/clarifyme/actions/workflows/ci-deploy.yml/badge.svg)](https://github.com/jyotipravatiitm/clarifyme/actions/workflows/ci-deploy.yml)
+
 Bite-size games that train **clear writing** and **clear thinking**, in the playful style of language-learning apps.
 
 If a sentence can mean two things, someone will read the other one. ClarifyMe makes you practice until it can't.
@@ -68,7 +70,7 @@ Events sent: `lesson_start`, `answer_check` (kind, pass, stars, judge mode), `le
 
 ## Deploy to your VPS
 
-Step-by-step guide for clarifyme.maidocs.in, including where `.env` goes and how to run behind an existing nginx: **[DEPLOY.md](DEPLOY.md)**.
+**Automatic:** every push to the default branch is tested and deployed by GitHub Actions (`.github/workflows/ci-deploy.yml`). One-time setup takes about 5 minutes: **[DEPLOY.md](DEPLOY.md)**. The manual steps below still work.
 
 The stack is one `docker compose` file: the app (Next.js standalone, non-root), **PostgreSQL 17**, **Caddy** (automatic HTTPS) and **nightly `pg_dump` backups** to `./backups`. Only ports 80 and 443 are exposed.
 

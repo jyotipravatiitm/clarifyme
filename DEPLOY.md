@@ -1,140 +1,104 @@
-# Deploying to clarifyme.maidocs.in
+# Deploying to clarifyme.maidocs.in (automatic)
 
-Server: `69.62.85.167` (user `jyotipravat`). DNS: A record `clarifyme.maidocs.in → 69.62.85.167`.
+**Every push to the default branch deploys automatically.** GitHub Actions does all of this:
 
-> **Where does `.env` go?** Only on the VPS, in the project folder next to `docker-compose.yml`:
-> `~/clarifyme/.env`. Git ignores it, so it is never committed. Never paste its contents into chats or issues.
+1. Tests the code: lint, typecheck, unit tests with Postgres, production build, and a real-browser test.
+2. Logs into the VPS over SSH and installs Docker the first time.
+3. Writes the server's `.env` from your GitHub secrets, keeping the database password it generated on the server.
+4. Sets up HTTPS: the bundled Caddy, or your existing nginx + certbot if nginx is already running.
+5. Rebuilds the app, waits until it is healthy, and checks `https://clarifyme.maidocs.in/api/health`.
 
-## 0. Check the server
+Server: `69.62.85.167`. DNS: A record `clarifyme.maidocs.in → 69.62.85.167` (done).
 
-```bash
-ssh jyotipravat@69.62.85.167
-dig +short clarifyme.maidocs.in          # must print 69.62.85.167 (DNS can take a few minutes)
-sudo ss -ltnp | grep -E ':80 |:443 '     # what already uses the web ports?
-```
+## One-time setup (about 5 minutes, all in the browser plus one command on your computer)
 
-- **Nothing listed** → use **Path A** (the bundled Caddy gets HTTPS automatically).
-- **nginx listed** (e.g. it already serves maidocs.in) → use **Path B** (put ClarifyMe behind your nginx).
-- **apache or anything else listed** → use Path B, but you'll need an equivalent site config for that server; ask for help.
+### 1. Make a deploy key on **your own computer**
 
-## 1. Install Docker (once)
+Mac/Linux Terminal, or Windows PowerShell:
 
 ```bash
-curl -fsSL https://get.docker.com | sudo sh
-sudo usermod -aG docker $USER
-newgrp docker                                   # or log out and back in
-docker compose version                          # should print v2.x
-# If the ufw firewall is on:
-sudo ufw allow 22/tcp && sudo ufw allow 80/tcp && sudo ufw allow 443/tcp && sudo ufw allow 443/udp
+ssh-keygen -t ed25519 -C "github-actions-clarifyme" -f clarifyme_deploy -N ""
 ```
 
-## 2. Get the code
+This creates two files:
+- `clarifyme_deploy.pub`: the **public** key. It goes on the VPS.
+- `clarifyme_deploy`: the **private** key. It goes into GitHub only. Don't share it anywhere else, and don't paste it in chats.
 
-The repository is `jyotipravatiitm/clarifyme`. If it is private, give the server a read-only **deploy key**:
+### 2. Add the public key to the VPS (Hostinger)
 
-```bash
-ssh-keygen -t ed25519 -C clarifyme-vps -f ~/.ssh/clarifyme -N ""
-cat ~/.ssh/clarifyme.pub
-```
+hPanel → VPS → **SSH keys** → **+ SSH key** → paste the whole content of `clarifyme_deploy.pub` → **Save**.
 
-1. Open GitHub → the repo → **Settings → Deploy keys → Add deploy key**.
-2. Paste the key and leave "Allow write access" **off**.
-3. Run:
+Hostinger installs panel keys for the `root` user, so the workflow connects as `root`.
 
-```bash
-cat >> ~/.ssh/config <<'CFG'
-Host github-clarifyme
-  HostName github.com
-  IdentityFile ~/.ssh/clarifyme
-CFG
-git clone -b claude/gracious-knuth-ddtijc git@github-clarifyme:jyotipravatiitm/clarifyme.git ~/clarifyme
-cd ~/clarifyme
-```
+> If Hostinger asks to apply the key or reinstall the OS, **don't reinstall**. If the key doesn't seem to apply, use **Web console** (top right) and run:
+> `mkdir -p ~/.ssh && echo "PASTE-THE-.pub-LINE-HERE" >> ~/.ssh/authorized_keys`
 
-Once the work is merged into `main`, use `-b main` (or switch later with `git checkout main && git pull`).
+### 3. Add secrets in GitHub
 
-## 3. Create `~/clarifyme/.env`
+Open https://github.com/jyotipravatiitm/clarifyme/settings/secrets/actions and click **New repository secret** for each:
 
-```bash
-cd ~/clarifyme
-cp .env.example .env
-chmod 600 .env
-openssl rand -hex 24        # copy this for POSTGRES_PASSWORD
-nano .env
-```
-
-| Setting | What to put | Where to get it |
+| Secret name | Value | Needed? |
 |---|---|---|
-| `DOMAIN` | `clarifyme.maidocs.in` | |
-| `POSTGRES_PASSWORD` | the random string from `openssl` | Keep it safe; it is your database password |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | `pk_test_…` (later `pk_live_…`) | dashboard.clerk.com → your app → **API keys** |
-| `CLERK_SECRET_KEY` | `sk_test_…` (later `sk_live_…`) | same page |
-| `FREE_LESSONS` | `10` | lessons a guest gets before signing up |
-| `NEXT_PUBLIC_GA_ID` | `G-XXXXXXXXXX` | analytics.google.com → Admin → **Data streams** → Web stream for `https://clarifyme.maidocs.in` → Measurement ID |
-| `NEXT_PUBLIC_GA_CONSENT` | `opt-out` | use `opt-in` if you expect EU/UK visitors |
-| `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` | optional AI judge | your OpenAI-compatible provider |
-| `OPENROUTER_API_KEY` | optional Jev judge | openrouter.ai → Keys |
+| `VPS_SSH_KEY` | the whole content of `clarifyme_deploy` (the private key, including the `-----BEGIN`/`END` lines) | **yes** |
+| `CLERK_PUBLISHABLE_KEY` | `pk_test_…` from dashboard.clerk.com → API keys | for accounts |
+| `CLERK_SECRET_KEY` | `sk_test_…` from the same page | for accounts |
+| `GA_MEASUREMENT_ID` | `G-…` from GA4 → Admin → Data streams → Web stream for `https://clarifyme.maidocs.in` | for analytics |
+| `LLM_API_KEY`, `LLM_MODEL`, `LLM_BASE_URL` | any OpenAI-compatible provider | optional AI judge |
+| `OPENROUTER_API_KEY` | openrouter.ai → Keys | optional Jev judge |
 
-**Clerk development vs production keys**
-- **Development keys** (`pk_test_`/`sk_test_`) work right away on any domain. Sign-in shows a small "Development mode" badge, and there are user limits. They are fine for a soft launch.
-- **For the real launch**:
-  1. In Clerk, switch to **Production** and create the production instance for `clarifyme.maidocs.in`.
-  2. Clerk lists a few **CNAME** records (like `clerk.clarifyme.maidocs.in`). Add them where you added the A record, then wait until Clerk shows them as verified.
-  3. If you use Google sign-in in production, set up your own Google OAuth credentials as Clerk instructs.
-  4. Put the `pk_live_…`/`sk_live_…` keys in `.env` and rebuild (step 4 again).
+Optional **variables** (same page → *Variables* tab). The defaults are already right for you:
 
-## 4. Start it
+| Variable | Default | When to change |
+|---|---|---|
+| `VPS_HOST` | `69.62.85.167` | |
+| `VPS_USER` | `root` | to deploy as another user (needs passwordless sudo) |
+| `APP_DOMAIN` | `clarifyme.maidocs.in` | |
+| `FREE_LESSONS` | `10` | |
+| `GA_CONSENT` | `opt-out` | `opt-in` for EU/UK visitors |
+| `CERT_EMAIL` | none | for Let's Encrypt expiry emails (nginx mode) |
 
-### Path A: nothing else on ports 80/443 (Caddy handles HTTPS)
+### 4. Deploy
 
-```bash
-docker compose up -d --build
-```
+Open https://github.com/jyotipravatiitm/clarifyme/actions/workflows/ci-deploy.yml, click **Run workflow** and pick the default branch.
 
-### Path B: nginx already serves other sites
+The first run takes about 10 minutes (it installs Docker and builds everything). Later runs take 3–5 minutes. When it's green, open https://clarifyme.maidocs.in.
 
-```bash
-docker compose -f docker-compose.yml -f docker-compose.nginx.yml up -d --build
-sudo cp deploy/nginx-clarifyme.conf /etc/nginx/sites-available/clarifyme
-sudo ln -s ../sites-available/clarifyme /etc/nginx/sites-enabled/clarifyme
-sudo nginx -t && sudo systemctl reload nginx
-sudo apt install -y certbot python3-certbot-nginx   # if certbot is missing
-sudo certbot --nginx -d clarifyme.maidocs.in        # HTTPS + auto-renewal
-```
+From now on, **just push**. Each push to the default branch is tested and, if green, deployed.
 
-The first build takes a few minutes.
+## Changing settings
 
-## 5. Check it works
+- **Change a value**: edit the secret in GitHub, then re-run the workflow (or push). The server's `.env` is updated, and settings you don't set in GitHub keep their server value.
+- **Remove a setting completely**: edit `/root/clarifyme/.env` on the server (Hostinger Web console) and redeploy.
+- **Clerk for real launch**:
+  1. In Clerk, create a **Production** instance for `clarifyme.maidocs.in`.
+  2. Add the CNAME records Clerk lists at your DNS provider.
+  3. Put the `pk_live_…`/`sk_live_…` keys into the two Clerk secrets and re-run.
 
-```bash
-docker compose ps                                   # db "healthy", app "healthy", backup up (+ caddy on Path A)
-docker compose logs app | grep -E "migrations applied|Ready"
-curl https://clarifyme.maidocs.in/api/health        # {"ok":true,"db":"up"}
-```
+## Watching and fixing
 
-Then open https://clarifyme.maidocs.in:
-1. The cookie banner appears.
-2. Finish a lesson.
-3. Sign up.
-4. **Review** shows the lesson you just played as a guest.
-
-## Everyday tasks
-
-| Task | Command (from `~/clarifyme`) |
+| Task | How |
 |---|---|
-| Update to the latest code | `git pull && docker compose up -d --build` (Path B: add the two `-f` flags) |
-| See logs | `docker compose logs -f app` |
-| Restart | `docker compose restart app` |
-| Changed `.env` | `docker compose up -d --build` (`NEXT_PUBLIC_*` values are baked into the page, so rebuild) |
-| Database shell | `docker compose exec db psql -U clarifyme clarifyme` |
-| Backups | daily in `~/clarifyme/backups/`. Copy them off the server now and then (e.g. `scp -r jyotipravat@69.62.85.167:clarifyme/backups .`) |
+| See what happened | GitHub → **Actions** → the run → open a red step. Screenshots from the browser test are under **Artifacts**. |
+| Server logs | Hostinger Web console: `cd ~/clarifyme && docker compose logs -f app` |
+| Backups | daily in `/root/clarifyme/backups/` |
 | Restore a backup | `gunzip -c backups/daily/<file>.sql.gz \| docker compose exec -T db psql -U clarifyme clarifyme` |
 
-## Troubleshooting
+Troubleshooting:
 
 | Problem | Fix |
 |---|---|
-| **Caddy can't get a certificate** | Check that DNS points at the server (`dig`) and that ports 80/443 are open in ufw and in your VPS provider's firewall panel. |
-| **`port is already allocated`** | Something else uses 80/443 → use Path B. |
-| **Sign-in page 404** | The Clerk keys are missing from `.env`. Add them and rebuild. |
-| **`{"db":"down"}`** | Run `docker compose logs db`. If you changed `POSTGRES_PASSWORD` after the first start, the old password still applies, because it is stored in the database volume. |
+| "Deploy skipped" warning | The `VPS_SSH_KEY` secret is missing. |
+| `Permission denied (publickey)` | The public key isn't on the server for the user in `VPS_USER`. Check step 2. |
+| Health check fails, certificate errors | DNS must point to the server, and ports 80/443 must be open in Hostinger's firewall (hPanel → VPS → Security → Firewall). |
+| Already running nginx | Handled automatically: ClarifyMe is added as an nginx site, and certbot gets the certificate. |
+
+## Manual deploy (without GitHub Actions)
+
+On the server:
+
+```bash
+git clone https://github.com/jyotipravatiitm/clarifyme ~/clarifyme
+cd ~/clarifyme
+printf 'DOMAIN=clarifyme.maidocs.in\nCLERK_SECRET_KEY=...\n' > .env.github   # any settings you want
+bash deploy/provision.sh && bash deploy/deploy.sh
+```
