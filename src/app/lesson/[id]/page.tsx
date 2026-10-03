@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getChallenge, getLesson, toPublic } from "@/lib/content";
-import { aiStatus } from "@/lib/ai/status";
 import { LessonRunner } from "@/components/lesson/LessonRunner";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +19,6 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
     <LessonRunner
       lesson={{ id: ref.lesson.id, title: ref.lesson.title, trackId: ref.track.id, trackTitle: ref.track.title }}
       steps={steps}
-      aiLabel={aiStatus().label}
     />
   );
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_PROGRESS, applyLessonResult, withFreshDay } from "./progress";
+import { DEFAULT_PROGRESS, applyLessonResult, mergeProgress, withFreshDay } from "./progress-core";
 
 describe("progress", () => {
   it("adds XP, keeps best stars, and extends the streak once the daily goal is met", () => {
@@ -23,5 +23,18 @@ describe("progress", () => {
     expect(day2.dailyXp).toBe(30);
     expect(withFreshDay(day2, "2026-10-04").streak).toBe(0);
     expect(withFreshDay(day2, "2026-10-03").streak).toBe(2);
+  });
+});
+
+
+describe("mergeProgress", () => {
+  it("keeps the best of both", () => {
+    const local = { ...DEFAULT_PROGRESS, xp: 50, streak: 2, streakDay: "2026-10-02", completed: { a: { stars: 3, xp: 20 }, b: { stars: 1, xp: 5 } } };
+    const server = { ...DEFAULT_PROGRESS, xp: 80, streak: 5, streakDay: "2026-10-01", completed: { b: { stars: 2, xp: 8 }, c: { stars: 3, xp: 25 } } };
+    const m = mergeProgress(local, server);
+    expect(m.xp).toBe(80);
+    expect(m.streak).toBe(2);
+    expect(m.streakDay).toBe("2026-10-02");
+    expect(m.completed).toEqual({ a: { stars: 3, xp: 20 }, b: { stars: 2, xp: 8 }, c: { stars: 3, xp: 25 } });
   });
 });

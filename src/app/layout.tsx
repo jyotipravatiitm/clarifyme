@@ -1,6 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Nunito } from "next/font/google";
+import { connection } from "next/server";
 import { Providers } from "@/components/Providers";
+import { FeaturesProvider, type Features } from "@/components/Features";
+import { AuthProvider } from "@/components/auth/AuthProvider";
+import { Analytics } from "@/components/analytics/Analytics";
+import { CookieBanner } from "@/components/analytics/CookieBanner";
+import { consentMode } from "@/lib/consent";
+import { clerkEnabled } from "@/server/config";
 import "./globals.css";
 
 const nunito = Nunito({ subsets: ["latin"], weight: ["600", "700", "800", "900"], variable: "--font-nunito" });
@@ -16,11 +23,22 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Read env at request time, so one Docker image works with any configuration.
+  await connection();
+  const gaId = process.env.NEXT_PUBLIC_GA_ID?.trim() || "";
+  const mode = consentMode(process.env.NEXT_PUBLIC_GA_CONSENT);
+  const features: Features = { auth: clerkEnabled(), db: !!process.env.DATABASE_URL, analytics: !!gaId };
   return (
     <html lang="en" className={nunito.variable}>
       <body className="min-h-dvh antialiased">
-        <Providers>{children}</Providers>
+        <AuthProvider enabled={features.auth}>
+          <FeaturesProvider value={features}>
+            <Providers>{children}</Providers>
+            {gaId && <CookieBanner gaId={gaId} mode={mode} />}
+          </FeaturesProvider>
+        </AuthProvider>
+        {gaId && <Analytics gaId={gaId} mode={mode} />}
       </body>
     </html>
   );

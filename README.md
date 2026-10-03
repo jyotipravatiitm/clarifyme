@@ -20,11 +20,73 @@ npm install
 npm run dev        # http://localhost:3000
 ```
 
-It works **without any API key**: rules plus keyword matching (the "Offline judge"). Add keys for the full AI judge:
+With no configuration it runs fully anonymous, with rules plus keyword matching (the "Offline judge"). Each integration below switches on when its env vars are set. See `.env.example`.
+
+| Feature | Needs | Without it |
+|---|---|---|
+| AI judging | `LLM_*` and/or `OPENROUTER_API_KEY` | Rules + keyword matching |
+| Accounts, free-lesson trial, session review | Clerk keys + `DATABASE_URL` | Anonymous; progress stays in the browser |
+| Google Analytics + cookie banner | `NEXT_PUBLIC_GA_ID` | No analytics, no banner |
+
+## Works on phone and desktop
+
+- **Phone and tablet**: top bar with streak/XP, a bottom tab bar (Learn / Review / About), and bottom feedback sheets.
+- **Desktop browsers (≥1024px)**: a left sidebar for navigation and your account, the lesson path in the middle, and from 1280px a right rail with the streak, XP, daily goal and free-lesson card. Lessons use two columns: the task or spec on the left, your answer on the right.
+- **Keyboard**:
+
+  | Key | Action |
+  |---|---|
+  | `Ctrl/⌘ + Enter` | Check |
+  | `Enter` | Continue / try again |
+  | `Enter` (in Break it) | Add a case |
+  | `H` | Hint |
+  | `Esc` | Quit the lesson |
+
+## Accounts, free trial and session review (Clerk + PostgreSQL)
+
+- **Guests** can play `FREE_LESSONS` lessons (default **10**) without an account. The count is kept **on the server**, per browser (`cm_anon` cookie). When a guest starts lesson 11, a friendly gate asks them to create a free account. A lesson that is already running is never interrupted.
+- **On sign-up/sign-in**, the guest's sessions move to the account automatically, so nothing is lost. Progress (XP, streak, stars) is merged and synced across devices.
+- **Review** (`/history`) lists every lesson session. Opening one shows each answer the learner checked, re-rendered with the same highlights, counterexamples, rule notes and case verdicts they saw live.
+- **Privacy** (`/privacy`) explains what is stored. Signed-in users can delete all of their saved data there.
+- When a database is set, the judging API only accepts requests that belong to an in-progress session owned by the caller, so the free-lesson limit cannot be skipped by calling the API directly. Requests are also rate limited (`RATE_LIMIT_PER_MINUTE`).
+
+Clerk setup:
+1. Create an application at [dashboard.clerk.com](https://dashboard.clerk.com) and turn on the sign-in methods you want (email, Google...).
+2. Copy the keys into `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`.
+3. For production, create a Clerk **production instance** for your domain and add the DNS records Clerk shows you.
+
+Database: PostgreSQL via [Drizzle ORM](https://orm.drizzle.team). The schema is in `src/db/schema.ts` and the SQL migrations are in `drizzle/`. Migrations run automatically when the server boots. After changing the schema, run `npm run db:generate`.
+
+## Google Analytics and cookies
+
+Set `NEXT_PUBLIC_GA_ID=G-XXXXXXX` to load GA4 with Google Consent Mode v2.
+
+- **Default (`NEXT_PUBLIC_GA_CONSENT=opt-out`)**: analytics is on, and a cookie banner on the first visit lets people **opt out**. Opting out disables GA and deletes the `_ga` cookies. "Cookie settings" in the side rail or on `/privacy` reopens the banner.
+- **`opt-in`**: analytics stays off until the visitor allows it. Use this if you have EU/UK visitors, because GDPR requires opt-in consent for analytics cookies.
+
+Events sent: `lesson_start`, `answer_check` (kind, pass, stars, judge mode), `lesson_complete`, `lesson_failed`, `hint_used`, `trial_gate_shown`, `sign_up_click`, `cookie_opt_out`. Answer text is never sent to Google, and advertising signals are always denied.
+
+## Deploy to your VPS
+
+The stack is one `docker compose` file: the app (Next.js standalone, non-root), **PostgreSQL 17**, **Caddy** (automatic HTTPS) and **nightly `pg_dump` backups** to `./backups`. Only ports 80 and 443 are exposed.
 
 ```bash
-cp .env.example .env.local
+# on the VPS (Docker + compose plugin installed), with DNS A/AAAA records pointing at it
+git clone <this repo> clarifyme && cd clarifyme
+cp .env.example .env
+nano .env        # DOMAIN, POSTGRES_PASSWORD, Clerk keys, GA id, AI keys
+docker compose up -d --build
+docker compose logs -f app        # "[db] migrations applied" then "Ready"
+curl https://$DOMAIN/api/health   # {"ok":true,"db":"up"}
 ```
+
+| Task | Command |
+|---|---|
+| Update | `git pull && docker compose up -d --build` |
+| Restore a backup | `gunzip -c backups/daily/<file>.sql.gz \| docker compose exec -T db psql -U clarifyme clarifyme` |
+| Inspect data | `docker compose exec db psql -U clarifyme clarifyme` |
+
+The rate limiter keeps its counters in memory, so run a single `app` container (fine for one VPS). Add Redis before scaling out.
 
 ## AI setup
 
@@ -66,14 +128,24 @@ The request shape is `POST https://openrouter.ai/api/alpha/decisions` with `{ mo
 
 ```
 src/
-  app/                    pages (home path, /lesson/[id], /about) and API routes (/api/check, /api/break)
+  app/                    pages (/, /lesson/[id], /history, /privacy, /about, /sign-in, /sign-up) + API routes
+  proxy.ts                Clerk session handling (Next 16 "proxy", formerly middleware)
+  instrumentation.ts      runs DB migrations on boot
+  components/shell/       AppShell (sidebar, rail, tab bar), StatsRail
   components/game/        Mascot, PathMap, TopBar, icons
   components/lesson/      LessonRunner, WriteStep, BreakStep, FeedbackSheet, CompleteScreen
+  components/review/      history list, attempt replay, shared result views
+  components/auth/        Clerk provider, account button, trial gate, delete-data
+  components/analytics/   GA4 loader + cookie banner
   content/                tracks.json + challenges/*.json  ← add new challenges here
+  db/                     Drizzle schema, client, migrator
+  server/                 actor (user / guest), sessions repository, trial, rate limit
   lib/rules/              deterministic clarity rules
   lib/ai/                 OpenAI-compatible LLM client, Jev client
   lib/judge/              combines rules + Jev + LLM into a verdict, stars and feedback
-  lib/progress.ts         XP / streak / stars in localStorage
+  lib/progress*.ts        XP / streak / stars (browser store + server sync)
+drizzle/                  SQL migrations
+Dockerfile, docker-compose.yml, Caddyfile
 scripts/smoke.mjs         end-to-end browser test with screenshots
 ```
 
@@ -94,7 +166,8 @@ Add an object to `src/content/challenges/*.json` and reference its `id` in a les
 ## Scripts
 
 ```bash
-npm test           # unit tests (rules, content, AI clients with mocks, judges, progress)
+npm test           # unit tests (rules, content, AI clients with mocks, judges, progress, consent)
+TEST_DATABASE_URL=postgres://localhost/clarifyme_test npm test   # also runs the Postgres repository tests
 npm run lint
 npm run typecheck
 npm run build && PORT=3000 npm start
@@ -113,5 +186,5 @@ See `/about` in the app for links.
 ## Roadmap ideas
 
 - Swap the SVG mascot for a Rive state machine (the `mood` prop maps 1:1 to state-machine inputs).
-- Accounts and a server database for progress across devices, plus leaderboards.
+- Leaderboards and friends, now that accounts exist.
 - More drills: argument maps (Toulmin/Argdown), "explain to a 10-year-old", TLA+/Quint invariants checked by a real model checker.

@@ -1,6 +1,5 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import { ChevronLeft } from "lucide-react";
+import { AppShell } from "@/components/shell/AppShell";
 import { Mascot } from "@/components/game/Mascot";
 
 export const metadata: Metadata = { title: "Why this works · ClarifyMe" };
@@ -53,10 +52,8 @@ const GROUPS: { title: string; blurb: string; items: [string, string, string][] 
 
 export default function About() {
   return (
-    <main className="mx-auto max-w-2xl px-4 pb-20 pt-6">
-      <Link href="/" className="mb-6 inline-flex items-center gap-1 font-extrabold text-ink-soft hover:text-ink">
-        <ChevronLeft size={20} /> Back
-      </Link>
+    <AppShell>
+    <div className="mx-auto max-w-2xl">
       <div className="mb-8 flex items-center gap-4">
         <Mascot mood="happy" size={96} />
         <div>
@@ -90,6 +87,7 @@ export default function About() {
           </section>
         ))}
       </div>
-    </main>
+    </div>
+    </AppShell>
   );
 }

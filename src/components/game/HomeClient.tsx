@@ -6,9 +6,10 @@ import { motion } from "motion/react";
 import { Bot, WifiOff } from "lucide-react";
 import type { Track } from "@/lib/content";
 import { useProgress } from "@/lib/progress";
+import { AppShell } from "@/components/shell/AppShell";
+import { DailyGoalCard, TrialCard } from "@/components/shell/StatsRail";
 import { Icon } from "./Icon";
 import { PathMap } from "./PathMap";
-import { TopBar } from "./TopBar";
 
 const TAB_KEY = "clarifyme:track";
 
@@ -38,42 +39,32 @@ export function HomeClient({ tracks, aiLabel, aiOn }: { tracks: Track[]; aiLabel
   const track = tracks.find((t) => t.id === trackId) ?? tracks[0];
   const lessons = track.units.flatMap((u) => u.lessons);
   const doneCount = lessons.filter((l) => progress.completed[l.id]).length;
-  const goalPct = Math.min(100, Math.round((progress.dailyXp / progress.dailyGoal) * 100));
 
   return (
-    <>
-      <TopBar />
-      <main className="mx-auto max-w-3xl px-4 pb-24 pt-5">
-        <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
-          <nav aria-label="Tracks" className="grid grid-cols-3 gap-2">
-            {tracks.map((t) => {
-              const active = t.id === track.id;
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => pick(t.id)}
-                  aria-pressed={active}
-                  className="card flex flex-col items-center gap-1 px-2 py-3 text-sm font-extrabold transition-colors"
-                  style={active ? { borderColor: `var(--${t.id})`, background: `color-mix(in srgb, var(--${t.id}) 12%, var(--surface))`, color: `var(--${t.id}-shade)` } : undefined}
-                >
-                  <Icon name={t.id} size={26} />
-                  {t.title}
-                </button>
-              );
-            })}
-          </nav>
-          <div className="card flex items-center gap-3 px-4 py-3 sm:w-56">
-            <div className="flex-1">
-              <p className="text-sm font-extrabold">Daily goal</p>
-              <div className="mt-1.5 h-3.5 overflow-hidden rounded-full bg-bg-soft">
-                <motion.div className="h-full rounded-full bg-gold" initial={false} animate={{ width: `${goalPct}%` }} transition={{ type: "spring", stiffness: 120, damping: 18 }} />
-              </div>
-              <p className="mt-1 text-xs font-bold text-ink-soft">
-                {Math.min(progress.dailyXp, progress.dailyGoal)} / {progress.dailyGoal} XP
-              </p>
-            </div>
-          </div>
+    <AppShell>
+      <div className="mx-auto max-w-xl">
+        <nav aria-label="Tracks" className="grid grid-cols-3 gap-2">
+          {tracks.map((t) => {
+            const active = t.id === track.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => pick(t.id)}
+                aria-pressed={active}
+                className="card flex flex-col items-center gap-1 px-2 py-3 text-sm font-extrabold transition-colors sm:flex-row sm:justify-center sm:gap-2"
+                style={active ? { borderColor: `var(--${t.id})`, background: `color-mix(in srgb, var(--${t.id}) 12%, var(--surface))`, color: `var(--${t.id}-shade)` } : undefined}
+              >
+                <Icon name={t.id} size={24} />
+                {t.title}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:hidden">
+          <DailyGoalCard />
+          <TrialCard />
         </div>
 
         <motion.div key={track.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
@@ -100,7 +91,7 @@ export function HomeClient({ tracks, aiLabel, aiOn }: { tracks: Track[]; aiLabel
             </Link>
           </p>
         </footer>
-      </main>
-    </>
+      </div>
+    </AppShell>
   );
 }
