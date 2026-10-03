@@ -68,6 +68,8 @@ Events sent: `lesson_start`, `answer_check` (kind, pass, stars, judge mode), `le
 
 ## Deploy to your VPS
 
+Step-by-step guide for clarifyme.maidocs.in, including where `.env` goes and how to run behind an existing nginx: **[DEPLOY.md](DEPLOY.md)**.
+
 The stack is one `docker compose` file: the app (Next.js standalone, non-root), **PostgreSQL 17**, **Caddy** (automatic HTTPS) and **nightly `pg_dump` backups** to `./backups`. Only ports 80 and 443 are exposed.
 
 ```bash
