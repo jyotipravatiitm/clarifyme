@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Nunito } from "next/font/google";
+import localFont from "next/font/local";
 import { connection } from "next/server";
 import { Providers } from "@/components/Providers";
 import { FeaturesProvider, type Features } from "@/components/Features";
@@ -10,7 +10,8 @@ import { consentMode } from "@/lib/consent";
 import { clerkEnabled } from "@/server/config";
 import "./globals.css";
 
-const nunito = Nunito({ subsets: ["latin"], weight: ["600", "700", "800", "900"], variable: "--font-nunito" });
+// Self-hosted (SIL OFL, see fonts/OFL.txt) so builds never depend on fonts.googleapis.com.
+const nunito = localFont({ src: "./fonts/nunito-latin-wght.woff2", weight: "200 1000", variable: "--font-nunito" });
 
 export const metadata: Metadata = {
   title: "ClarifyMe",
